@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Craterra</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace" aria-label="Craterra music digging tool">
+        <header class="masthead">
+          <div>
+            <p class="eyebrow">Craterra</p>
+            <h1>Dig past the obvious.</h1>
+          </div>
+          <div class="status" id="status">Ready</div>
+        </header>
+
+        <form class="dig-form" id="dig-form">
+          <label class="field field-main">
+            <span>Song</span>
+            <input
+              id="query"
+              name="query"
+              type="search"
+              autocomplete="off"
+              placeholder="Radiohead Creep"
+              required
+              minlength="2"
+            />
+          </label>
+
+          <label class="field">
+            <span>Region</span>
+            <input
+              id="region"
+              name="region"
+              type="text"
+              autocomplete="off"
+              placeholder="KR, JP, BR, EU"
+            />
+          </label>
+
+          <label class="field">
+            <span>Era</span>
+            <input
+              id="era"
+              name="era"
+              type="text"
+              autocomplete="off"
+              placeholder="1990s, 2020s"
+            />
+          </label>
+
+          <label class="field field-small">
+            <span>Jump</span>
+            <input id="distance" name="distance" type="range" min="1" max="5" value="3" />
+            <output id="distance-output" for="distance">3</output>
+          </label>
+
+          <label class="field">
+            <span>Mood</span>
+            <input
+              id="mood"
+              name="mood"
+              type="text"
+              autocomplete="off"
+              placeholder="melancholy, late night"
+            />
+          </label>
+
+          <label class="toggle">
+            <input id="challenge" name="challenge" type="checkbox" />
+            <span>Challenge</span>
+          </label>
+
+          <button class="primary" type="submit">Dig</button>
+        </form>
+
+        <section class="results" id="results" aria-live="polite">
+          <div class="empty">
+            <h2>Start with one track.</h2>
+            <p>Recommendations will appear here with previews, artwork, and feedback controls.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <template id="card-template">
+      <article class="track-card">
+        <img class="artwork" alt="" />
+        <div class="track-body">
+          <div class="track-topline">
+            <div>
+              <h2 class="track-title"></h2>
+              <p class="track-artist"></p>
+            </div>
+            <div class="badges">
+              <span class="rarity"></span>
+              <span class="confidence"></span>
+            </div>
+          </div>
+          <p class="reason"></p>
+          <audio class="preview" controls></audio>
+          <div class="outbound-links"></div>
+          <div class="actions">
+            <a class="external" target="_blank" rel="noreferrer">Open</a>
+            <button class="continue" type="button">Dig</button>
+            <button class="vote like" type="button">Like</button>
+            <button class="vote dislike" type="button">Skip</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
