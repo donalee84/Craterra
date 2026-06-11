@@ -27,6 +27,8 @@ async def curate_candidates(
     request: DigRequest,
     candidates: list[CandidateTrack],
     session_profile: SessionTasteProfile | None = None,
+    root_title: str | None = None,
+    root_artist: str | None = None,
 ) -> tuple[list[CuratedPick], str]:
     settings = get_settings()
     if not settings.openrouter_api_key:
@@ -41,6 +43,8 @@ async def curate_candidates(
                 request=request,
                 candidates=candidates,
                 session_profile=session_profile,
+                root_title=root_title,
+                root_artist=root_artist,
             )
             return picks, model
         except OpenRouterCurationError as exc:
@@ -55,6 +59,8 @@ async def _request_curation(
     request: DigRequest,
     candidates: list[CandidateTrack],
     session_profile: SessionTasteProfile | None,
+    root_title: str | None,
+    root_artist: str | None,
 ) -> list[CuratedPick]:
     try:
         async with api_client() as client:
@@ -70,6 +76,8 @@ async def _request_curation(
                     request=request,
                     candidates=candidates,
                     session_profile=session_profile,
+                    root_title=root_title,
+                    root_artist=root_artist,
                 ),
             )
             response.raise_for_status()
@@ -102,6 +110,8 @@ def _build_payload(
     request: DigRequest,
     candidates: list[CandidateTrack],
     session_profile: SessionTasteProfile | None,
+    root_title: str | None,
+    root_artist: str | None,
 ) -> dict[str, Any]:
     curation_guidance = _curation_guidance(request)
     candidate_lines = "\n".join(
@@ -121,6 +131,10 @@ def _build_payload(
         "era": request.era,
         "challenge_mode": request.challenge_mode,
         "mood_tags": request.mood_tags,
+        "normalized_root": {
+            "title": root_title,
+            "artist": root_artist,
+        },
         "session_profile": (
             session_profile.model_dump(exclude={"session_id"}) if session_profile else None
         ),
@@ -172,10 +186,15 @@ def _build_payload(
                 "role": "system",
                 "content": (
                     "You are Craterra, a music digging curator. Select 3 to 5 tracks "
-                    "only from the provided candidate list. Prefer less obvious tracks "
-                    "with higher rarity_score when the musical bridge is still clear, "
-                    "clear musical bridges, and concise reasons. Avoid disliked session "
-                    "patterns and lean into liked session patterns when they are present. "
+                    "only from the provided candidate list. This is not a same-vibe playlist; "
+                    "it is a digging path. Prefer less obvious tracks with higher rarity_score "
+                    "when the musical bridge is still clear. Penalize candidates labeled Obvious, "
+                    "especially when distance_level is 3 or higher. Do not pick the normalized "
+                    "root track. Avoid the normalized root artist unless distance_level is 1 or "
+                    "there are no viable alternatives. Each reason must name the bridge and one "
+                    "difference from the root, such as genre, era, region, scene, energy, texture, "
+                    "instrumentation, or production lineage. Avoid disliked session patterns and "
+                    "lean into liked session patterns when they are present. "
                     "Never invent songs. Do not mention internal scores or APIs."
                 ),
             },
@@ -194,11 +213,11 @@ def _build_payload(
 
 def _curation_guidance(request: DigRequest) -> str:
     distance_notes = {
-        1: "Stay close to the root song: same artist, scene, era, or immediately adjacent sound.",
-        2: "Make a modest jump: similar mood or genre, but avoid the most obvious hit when possible.",
-        3: "Balance familiarity and discovery: a clear bridge plus at least one less obvious pick.",
-        4: "Prefer bolder bridges: adjacent genres, era jumps, regional parallels, or deeper catalog cuts.",
-        5: "Make adventurous but defensible jumps: prioritize surprising links with strong reasons.",
+        1: "Stay close to the root song, but prefer a non-hit or adjacent catalog pick over the obvious answer.",
+        2: "Make a modest jump: similar mood or genre, avoid the root artist when enough alternatives exist, and skip the most obvious hit.",
+        3: "Balance familiarity and discovery: every pick needs a clear bridge plus at least one meaningful difference from the root.",
+        4: "Prefer bolder bridges: adjacent genres, era jumps, regional parallels, label/producer lineage, or deeper catalog cuts. Avoid Obvious candidates unless no better bridge exists.",
+        5: "Make adventurous but defensible jumps: no same-artist picks, prioritize surprising links, and require a strong musical reason.",
     }
     notes = [distance_notes.get(request.distance_level, distance_notes[3])]
 

@@ -6,7 +6,8 @@ from fastapi.testclient import TestClient
 from backend.app.config import get_settings
 from backend.app.main import app
 from backend.app.middleware.rate_limit import InMemoryRateLimiter
-from backend.app.schemas import DigResponse, TrackValidationResult, ValidateResponse
+from backend.app.schemas import CandidateTrack, DigResponse, TrackValidationResult, ValidateResponse
+from backend.app.services.dig import _prepare_curation_candidates
 
 
 client = TestClient(app)
@@ -101,3 +102,30 @@ def test_in_memory_rate_limiter_blocks_after_limit():
     allowed, retry_after = limiter.allow("client:/dig", limit=2)
     assert allowed is False
     assert retry_after > 0
+
+
+def test_prepare_curation_candidates_filters_seed_and_root_artist_for_digging():
+    candidates = [
+        CandidateTrack(title="Creep", artist="Radiohead", source="test", rarity_score=0.1),
+        CandidateTrack(title="No Surprises", artist="Radiohead", source="test", rarity_score=0.8),
+        CandidateTrack(title="Song A", artist="Artist A", source="test", rarity_score=0.2),
+        CandidateTrack(title="Song B", artist="Artist B", source="test", rarity_score=0.7),
+        CandidateTrack(title="Song C", artist="Artist C", source="test", rarity_score=0.5),
+        CandidateTrack(title="Song D", artist="Artist D", source="test", rarity_score=0.4),
+        CandidateTrack(title="Song E", artist="Artist E", source="test", rarity_score=0.9),
+        CandidateTrack(title="Song F", artist="Artist F", source="test", rarity_score=0.6),
+        CandidateTrack(title="Song G", artist="Artist G", source="test", rarity_score=0.3),
+        CandidateTrack(title="Song H", artist="Artist H", source="test", rarity_score=0.8),
+    ]
+
+    prepared = _prepare_curation_candidates(
+        candidates,
+        root_title="Creep",
+        root_artist="Radiohead",
+        distance_level=4,
+        limit=8,
+    )
+
+    assert all(candidate.title != "Creep" for candidate in prepared)
+    assert all(candidate.artist != "Radiohead" for candidate in prepared)
+    assert prepared[0].rarity_score == 0.9

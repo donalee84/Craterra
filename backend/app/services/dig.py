@@ -56,13 +56,21 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
         )
 
     session_profile = await get_session_profile(request.session_id)
-    curation_candidates = candidates[:18]
+    curation_candidates = _prepare_curation_candidates(
+        candidates,
+        root_title=root_validation.title if root_validation else None,
+        root_artist=root_validation.artist if root_validation else None,
+        distance_level=request.distance_level,
+        limit=18,
+    )
 
     try:
         picks, model_used = await curate_candidates(
             request,
             curation_candidates,
             session_profile=session_profile,
+            root_title=root_validation.title if root_validation else None,
+            root_artist=root_validation.artist if root_validation else None,
         )
     except OpenRouterNotConfiguredError as exc:
         raise HTTPException(
@@ -101,7 +109,7 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
         candidates=candidates,
         recommendations=recommendations,
         model_used=model_used,
-        next_step="Add Bandcamp / Apple Music outbound links next.",
+        next_step="Tune dig-pattern learning and share cards next.",
     )
 
 
@@ -123,6 +131,59 @@ def _merge_candidates(
             break
 
     return merged
+
+
+def _prepare_curation_candidates(
+    candidates: list[CandidateTrack],
+    *,
+    root_title: str | None,
+    root_artist: str | None,
+    distance_level: int,
+    limit: int,
+) -> list[CandidateTrack]:
+    root_title_key = _normalize_key(root_title)
+    root_artist_key = _normalize_key(root_artist)
+
+    without_seed = [
+        candidate
+        for candidate in candidates
+        if not (
+            root_title_key
+            and root_artist_key
+            and _normalize_key(candidate.title) == root_title_key
+            and _normalize_key(candidate.artist) == root_artist_key
+        )
+    ]
+
+    if distance_level >= 2 and root_artist_key:
+        other_artists = [
+            candidate
+            for candidate in without_seed
+            if _normalize_key(candidate.artist) != root_artist_key
+        ]
+        if len(other_artists) >= min(8, limit):
+            without_seed = other_artists
+
+    if distance_level >= 4:
+        without_seed = sorted(
+            without_seed,
+            key=lambda candidate: (
+                0 if (candidate.rarity_score or 0) >= 0.28 else 1,
+                -(candidate.rarity_score or 0),
+                -(candidate.match_score or 0),
+            ),
+        )
+    elif distance_level >= 3:
+        without_seed = sorted(
+            without_seed,
+            key=lambda candidate: (
+                0 if (candidate.rarity_label or "") != "Obvious" else 1,
+                -(candidate.match_score or 0),
+                -(candidate.rarity_score or 0),
+            ),
+        )
+
+    return without_seed[:limit]
 
 
 def _apply_relative_rarity(candidates: list[CandidateTrack]) -> None:
@@ -161,3 +222,7 @@ def _relative_rarity_label(score: float) -> str:
     if score >= 0.28:
         return "Mid-known"
     return "Obvious"
+
+
+def _normalize_key(value: str | None) -> str:
+    return " ".join((value or "").casefold().strip().split())

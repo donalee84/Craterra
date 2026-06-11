@@ -21,6 +21,7 @@ The app can:
 12. Save dig history through Supabase with local fallback
 13. Add ListenBrainz artist top recordings as a second candidate source
 14. Add Bandcamp and Apple Music outbound search links to recommendation cards
+15. Apply stronger dig curation rules for distance, rarity, same-artist avoidance, and bridge/difference reasons
 
 Local app URL:
 
@@ -92,6 +93,10 @@ Candidate handling:
 
 - Last.fm fetches up to 25 candidates
 - ListenBrainz adds up to 10 artist top-recording candidates after MusicBrainz artist MBID lookup
+- Seed track is removed before curation
+- Same root artist is avoided from distance level 2+ when enough alternatives exist
+- Distance level 3+ deprioritizes obvious picks
+- Distance level 4+ prioritizes deeper rarity candidates
 - The first 18 are sent to OpenRouter for curation
 - OpenRouter returns structured JSON picks
 - Each pick is validated before being returned to the frontend
@@ -241,6 +246,7 @@ Confirmed working:
 - Desktop/mobile visual QA screenshots generated in `artifacts/visual-qa/`
 - Railway deployment config added
 - In-memory rate limiting added for `/validate`, `/feedback`, and `/dig`
+- Stronger dig curation rules for less obvious, more adventurous recommendations
 - Local feedback storage
 - Local dig history storage
 
