@@ -28,6 +28,7 @@ The app can:
 19. Add recommendation share actions with native share and clipboard fallback
 20. Show the current dig chain with clear and jump-back controls
 21. Track OpenRouter token usage and cost in `/dig` responses, dig history, and structured logs
+22. Add MusicBrainz relationship enrichment summaries to validation results and recommendation cards
 
 Local app URL:
 
@@ -285,6 +286,7 @@ Confirmed working:
 - Dig chain visualization in the frontend
 - OpenRouter token and cost tracking
 - Mobile and desktop viewport QA screenshots generated on 2026-06-14
+- MusicBrainz relationship enrichment summaries
 
 Example verified `/dig` behavior:
 
@@ -302,14 +304,13 @@ This is a deployed MVP, not a fully launch-ready service.
 
 Still missing:
 
-- MusicBrainz relationship enrichment
 - Bandcamp affiliate program wiring
 - Mobile layout QA in a real browser
 
 ## Recommended Next Steps
 
 1. Test mobile layout in a real handheld browser
-2. Add MusicBrainz relationship enrichment
+2. Wire real Bandcamp affiliate flow
 3. Decide whether Vercel split deploy is needed after first demo
 
 ## Important Notes

@@ -304,6 +304,24 @@ output {
   line-height: 1.55;
 }
 
+.relationship-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.relationship-summary li {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
 .badges {
   display: flex;
   flex-wrap: wrap;

@@ -17,6 +17,7 @@ from backend.app.schemas import (
     TrackValidationResult,
     ValidateResponse,
 )
+from backend.app.clients.musicbrainz import _relationship_summary
 from backend.app.services.local_store import build_dig_history_record
 from backend.app.services.dig import _prepare_curation_candidates
 
@@ -46,6 +47,7 @@ def test_validate_returns_success(monkeypatch):
     payload = response.json()
     assert payload["found"] is True
     assert payload["result"]["title"] == "Creep"
+    assert payload["result"]["relationship_summary"] == []
     assert payload["checked_sources"] == ["deezer"]
 
 
@@ -208,6 +210,35 @@ def test_dig_history_record_includes_usage():
         "total_tokens": 120,
         "cost": 0.0012,
     }
+
+
+def test_musicbrainz_relationship_summary_formats_recording_and_work_relations():
+    recording = {
+        "relations": [
+            {
+                "type": "producer",
+                "artist": {"name": "Nigel Godrich"},
+            }
+        ],
+        "works": [
+            {
+                "title": "Creep",
+                "relations": [
+                    {
+                        "type": "composer",
+                        "artist": {"name": "Radiohead"},
+                        "attributes": ["music"],
+                    }
+                ],
+            }
+        ],
+    }
+
+    assert _relationship_summary(recording) == [
+        "producer: Nigel Godrich",
+        "work: Creep",
+        "composer: Radiohead (music)",
+    ]
 
 
 def test_in_memory_rate_limiter_blocks_after_limit():

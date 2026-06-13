@@ -20,6 +20,7 @@ class TrackValidationResult(BaseModel):
     artwork_url: HttpUrl | None = None
     preview_url: HttpUrl | None = None
     external_url: HttpUrl | None = None
+    relationship_summary: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
 
 

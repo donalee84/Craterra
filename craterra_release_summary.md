@@ -47,6 +47,7 @@ Expected health response:
 - External API retry/backoff logging for transient 429/5xx and network failures
 - OpenRouter token and cost tracking in `/dig` responses, dig history, and logs
 - Mobile and desktop viewport QA screenshots
+- MusicBrainz relationship enrichment summaries on validation/recommendation cards
 - Railway deployment from GitHub
 
 ## Final Production Smoke Test
@@ -134,5 +135,4 @@ APPLE_MUSIC_AFFILIATE_TOKEN=
 ## Remaining Work
 
 - Test mobile layout on a real phone browser
-- Add MusicBrainz relationship enrichment
 - Wire real Bandcamp affiliate flow

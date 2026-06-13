@@ -94,6 +94,10 @@ function renderRecommendations(recommendations) {
     card.querySelector(".reason").textContent = recommendation.reason;
     card.querySelector(".confidence").textContent = `${Math.round(recommendation.confidence * 100)}%`;
     card.querySelector(".rarity").textContent = recommendation.rarity_label || "Unknown";
+    renderRelationshipSummary(
+      card.querySelector(".relationship-summary"),
+      validation.relationship_summary || [],
+    );
 
     const artwork = card.querySelector(".artwork");
     artwork.src = validation.artwork_url || "";
@@ -204,6 +208,21 @@ function saveDigChain() {
 
 function normalizeChainKey(value) {
   return value.toLowerCase().trim().replace(/\s+/g, " ");
+}
+
+function renderRelationshipSummary(container, relationships) {
+  container.innerHTML = "";
+
+  if (!relationships.length) {
+    container.remove();
+    return;
+  }
+
+  relationships.slice(0, 4).forEach((relationship) => {
+    const item = document.createElement("li");
+    item.textContent = relationship;
+    container.append(item);
+  });
 }
 
 async function shareRecommendation(recommendation) {
