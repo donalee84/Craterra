@@ -1,5 +1,5 @@
 # Craterra Release Summary
-> Updated: 2026-06-12
+> Updated: 2026-06-14
 
 ## Status
 
@@ -91,17 +91,18 @@ https://github.com/donalee84/Craterra
 Latest pushed commits:
 
 ```text
+716252e Track outbound music link clicks
+b099617 Add MusicBrainz relationship summaries
+159e24c Tighten mobile viewport layout
+0d0bf7a Add OpenRouter usage tracking
+c936885 Add dig chain visualization
 708a704 Trigger Railway redeploy
-4c7945d Add recommendation share actions
-e99a81e Add external API retry logging
-bacb112 Add structured request logging
-8f2bcaf Trigger Railway redeploy
 ```
 
 Railway active deployment:
 
 ```text
-Trigger Railway redeploy
+Track outbound music link clicks
 Deployment successful
 ```
 

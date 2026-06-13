@@ -1,5 +1,5 @@
 # Craterra Progress
-> Updated: 2026-06-12
+> Updated: 2026-06-14
 
 ## Current Status
 
@@ -211,6 +211,7 @@ data/dig_history.jsonl
 - root_song
 - params
 - model_used
+- usage
 - recommendations
 - created_at
 
@@ -235,6 +236,7 @@ Current behavior:
 
 - `/feedback` writes to Supabase when configured
 - `/dig` history writes to Supabase when configured
+- `/outbound-click` writes to Supabase when configured
 - Session taste profile reads feedback from Supabase when configured
 - If Supabase is missing or a persistence request fails, the app keeps using local JSONL
 
