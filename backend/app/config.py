@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     validate_rate_limit_per_minute: int = 60
     feedback_rate_limit_per_minute: int = 60
     dig_rate_limit_per_minute: int = 12
+    outbound_click_rate_limit_per_minute: int = 120
 
     model_config = SettingsConfigDict(
         env_file=".env",

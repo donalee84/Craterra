@@ -120,7 +120,7 @@ function renderRecommendations(recommendations) {
     }
 
     const outboundLinks = card.querySelector(".outbound-links");
-    renderOutboundLinks(outboundLinks, recommendation.outbound_links || []);
+    renderOutboundLinks(outboundLinks, recommendation.outbound_links || [], recommendation);
 
     card.querySelector(".like").addEventListener("click", () => {
       vote(card, recommendation, true);
@@ -257,7 +257,7 @@ function buildShareText(recommendation) {
     .join("\n");
 }
 
-function renderOutboundLinks(container, links) {
+function renderOutboundLinks(container, links, recommendation) {
   container.innerHTML = "";
 
   if (!links.length) {
@@ -272,8 +272,35 @@ function renderOutboundLinks(container, links) {
     anchor.target = "_blank";
     anchor.rel = "noreferrer";
     anchor.textContent = link.label;
+    anchor.addEventListener("click", () => {
+      trackOutboundClick(link, recommendation);
+    });
     container.append(anchor);
   });
+}
+
+function trackOutboundClick(link, recommendation) {
+  const payload = JSON.stringify({
+    session_id: sessionId,
+    service: link.service,
+    song_name: recommendation.title,
+    artist_name: recommendation.artist,
+    url: link.url,
+  });
+
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: "application/json" });
+    if (navigator.sendBeacon("/outbound-click", blob)) {
+      return;
+    }
+  }
+
+  fetch("/outbound-click", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload,
+    keepalive: true,
+  }).catch(() => {});
 }
 
 async function vote(card, recommendation, voteValue) {

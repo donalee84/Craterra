@@ -68,6 +68,7 @@ def _rule_for_path(path: str) -> RateLimitRule | None:
         "/validate": settings.validate_rate_limit_per_minute,
         "/feedback": settings.feedback_rate_limit_per_minute,
         "/dig": settings.dig_rate_limit_per_minute,
+        "/outbound-click": settings.outbound_click_rate_limit_per_minute,
     }
     limit = rules.get(path)
     if limit is None or limit <= 0:

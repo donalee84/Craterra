@@ -77,6 +77,27 @@ def test_feedback_writes_local_fallback(tmp_path, monkeypatch):
     assert (Path(tmp_path) / "feedback.jsonl").exists()
 
 
+def test_outbound_click_writes_local_fallback(tmp_path, monkeypatch):
+    settings = get_settings()
+    settings.local_data_dir = str(tmp_path)
+    monkeypatch.setattr("backend.app.services.persistence.is_supabase_configured", lambda: False)
+
+    response = client.post(
+        "/outbound-click",
+        json={
+            "session_id": "test-session",
+            "service": "bandcamp",
+            "song_name": "Creep",
+            "artist_name": "Radiohead",
+            "url": "https://bandcamp.com/search?q=Radiohead+Creep",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["storage_backend"] == "local"
+    assert (Path(tmp_path) / "outbound_clicks.jsonl").exists()
+
+
 def test_dig_returns_recommendations(monkeypatch):
     async def fake_build_dig_response(request) -> DigResponse:
         return DigResponse(

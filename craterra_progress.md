@@ -29,6 +29,7 @@ The app can:
 20. Show the current dig chain with clear and jump-back controls
 21. Track OpenRouter token usage and cost in `/dig` responses, dig history, and structured logs
 22. Add MusicBrainz relationship enrichment summaries to validation results and recommendation cards
+23. Track outbound Bandcamp / Apple Music clicks with Supabase and local JSONL fallback
 
 Local app URL:
 
@@ -65,6 +66,7 @@ Implemented routes:
 | GET | `/validate` | Done |
 | POST | `/dig` | Done for local MVP |
 | POST | `/feedback` | Done with Supabase and local JSONL fallback |
+| POST | `/outbound-click` | Done with Supabase and local JSONL fallback |
 
 ### `/validate`
 
@@ -278,6 +280,7 @@ Confirmed working:
 - Stronger dig curation rules for less obvious, more adventurous recommendations
 - Supabase feedback storage
 - Supabase dig history storage
+- Supabase/local outbound click tracking
 - Railway production deployment
 - Structured JSON request logging
 - Stable 500 error response with request id
@@ -287,6 +290,7 @@ Confirmed working:
 - OpenRouter token and cost tracking
 - Mobile and desktop viewport QA screenshots generated on 2026-06-14
 - MusicBrainz relationship enrichment summaries
+- Outbound click tracking for Bandcamp and Apple Music links
 
 Example verified `/dig` behavior:
 
@@ -310,8 +314,9 @@ Still missing:
 ## Recommended Next Steps
 
 1. Test mobile layout in a real handheld browser
-2. Wire real Bandcamp affiliate flow
-3. Decide whether Vercel split deploy is needed after first demo
+2. Apply the `outbound_clicks` Supabase schema in production
+3. Revisit Bandcamp affiliate wiring if Bandcamp exposes a public affiliate or partner flow
+4. Decide whether Vercel split deploy is needed after first demo
 
 ## Important Notes
 
@@ -326,3 +331,8 @@ OpenRouter:
 - Current default model is `deepseek/deepseek-v4-flash`
 - Current fallback model is `qwen/qwen3-30b-a3b-instruct-2507`
 - Both were verified against the OpenRouter model API during development
+
+Bandcamp:
+
+- A public official affiliate-link program was not confirmed during implementation
+- Craterra now tracks outbound Bandcamp clicks so future partner or affiliate conversion can be measured

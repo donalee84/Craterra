@@ -26,6 +26,10 @@ async def insert_dig_history(record: dict[str, Any]) -> None:
     await _insert("dig_history", record)
 
 
+async def insert_outbound_click(record: dict[str, Any]) -> None:
+    await _insert("outbound_clicks", record)
+
+
 async def fetch_feedback(session_id: str) -> list[dict[str, Any]]:
     settings = get_settings()
     url = _table_url("feedback")

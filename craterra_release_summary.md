@@ -48,6 +48,7 @@ Expected health response:
 - OpenRouter token and cost tracking in `/dig` responses, dig history, and logs
 - Mobile and desktop viewport QA screenshots
 - MusicBrainz relationship enrichment summaries on validation/recommendation cards
+- Outbound click tracking for Bandcamp and Apple Music links
 - Railway deployment from GitHub
 
 ## Final Production Smoke Test
@@ -122,6 +123,7 @@ LOCAL_DATA_DIR=data
 DIG_RATE_LIMIT_PER_MINUTE=12
 FEEDBACK_RATE_LIMIT_PER_MINUTE=60
 VALIDATE_RATE_LIMIT_PER_MINUTE=60
+OUTBOUND_CLICK_RATE_LIMIT_PER_MINUTE=120
 OPENROUTER_MODEL=deepseek/deepseek-v4-flash
 OPENROUTER_FALLBACK_MODEL=qwen/qwen3-30b-a3b-instruct-2507
 ```
@@ -135,4 +137,5 @@ APPLE_MUSIC_AFFILIATE_TOKEN=
 ## Remaining Work
 
 - Test mobile layout on a real phone browser
-- Wire real Bandcamp affiliate flow
+- Apply `outbound_clicks` Supabase schema in production
+- Revisit Bandcamp affiliate wiring if Bandcamp exposes a public affiliate or partner flow

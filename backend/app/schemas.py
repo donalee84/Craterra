@@ -54,6 +54,19 @@ class FeedbackResponse(BaseModel):
     storage_backend: Literal["local", "supabase"] = "local"
 
 
+class OutboundClickRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    service: Literal["bandcamp", "apple_music"]
+    song_name: str = Field(min_length=1, max_length=200)
+    artist_name: str = Field(min_length=1, max_length=200)
+    url: HttpUrl
+
+
+class OutboundClickResponse(BaseModel):
+    saved: bool
+    storage_backend: Literal["local", "supabase"] = "local"
+
+
 class SessionTasteProfile(BaseModel):
     session_id: str
     liked_tracks: list[str] = Field(default_factory=list)

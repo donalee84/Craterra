@@ -11,6 +11,7 @@ from backend.app.schemas import (
     FeedbackRequest,
     FeedbackResponse,
     OpenRouterUsage,
+    OutboundClickRequest,
     RecommendationCard,
     SessionTasteProfile,
 )
@@ -38,6 +39,24 @@ def write_feedback_record(record: dict[str, Any]) -> None:
     with _LOCK:
         _feedback_path().parent.mkdir(parents=True, exist_ok=True)
         with _feedback_path().open("a", encoding="utf-8") as file:
+            file.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def build_outbound_click_record(request: OutboundClickRequest) -> dict[str, Any]:
+    return {
+        "session_id": request.session_id,
+        "service": request.service,
+        "song_name": request.song_name,
+        "artist_name": request.artist_name,
+        "url": str(request.url),
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+
+
+def write_outbound_click_record(record: dict[str, Any]) -> None:
+    with _LOCK:
+        _outbound_clicks_path().parent.mkdir(parents=True, exist_ok=True)
+        with _outbound_clicks_path().open("a", encoding="utf-8") as file:
             file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
@@ -147,6 +166,10 @@ def _feedback_path() -> Path:
 
 def _dig_history_path() -> Path:
     return Path(get_settings().local_data_dir) / "dig_history.jsonl"
+
+
+def _outbound_clicks_path() -> Path:
+    return Path(get_settings().local_data_dir) / "outbound_clicks.jsonl"
 
 
 def _track_key(artist: Any, song: Any) -> str:

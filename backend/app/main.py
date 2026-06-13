@@ -10,6 +10,7 @@ from backend.app.middleware.rate_limit import RateLimitMiddleware
 from backend.app.observability import RequestLoggingMiddleware, configure_logging
 from backend.app.routers.dig import router as dig_router
 from backend.app.routers.feedback import router as feedback_router
+from backend.app.routers.outbound import router as outbound_router
 from backend.app.routers.validate import router as validate_router
 from backend.app.schemas import HealthResponse
 
@@ -56,6 +57,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 app.include_router(validate_router)
 app.include_router(dig_router)
 app.include_router(feedback_router)
+app.include_router(outbound_router)
 
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
