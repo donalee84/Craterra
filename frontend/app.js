@@ -104,6 +104,9 @@ function renderRecommendations(recommendations) {
     card.querySelector(".dislike").addEventListener("click", () => {
       vote(card, recommendation, false);
     });
+    card.querySelector(".share").addEventListener("click", () => {
+      shareRecommendation(recommendation);
+    });
     card.querySelector(".continue").addEventListener("click", () => {
       queryInput.value = `${recommendation.artist} ${recommendation.title}`;
       form.requestSubmit();
@@ -112,6 +115,38 @@ function renderRecommendations(recommendations) {
 
     results.append(card);
   });
+}
+
+async function shareRecommendation(recommendation) {
+  const shareText = buildShareText(recommendation);
+  const shareData = {
+    title: `${recommendation.artist} - ${recommendation.title}`,
+    text: shareText,
+    url: window.location.origin,
+  };
+
+  try {
+    if (navigator.share && navigator.canShare?.(shareData)) {
+      await navigator.share(shareData);
+      setStatus("Shared");
+      return;
+    }
+
+    await navigator.clipboard.writeText(`${shareText}\n${window.location.origin}`);
+    setStatus("Copied");
+  } catch (error) {
+    setStatus("Share failed");
+  }
+}
+
+function buildShareText(recommendation) {
+  const rarity = recommendation.rarity_label ? ` [${recommendation.rarity_label}]` : "";
+  return [
+    `Craterra pick: ${recommendation.artist} - ${recommendation.title}${rarity}`,
+    recommendation.reason,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function renderOutboundLinks(container, links) {
