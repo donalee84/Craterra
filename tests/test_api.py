@@ -93,6 +93,35 @@ def test_dig_surfaces_service_errors(monkeypatch):
     assert response.json()["detail"] == "LASTFM_API_KEY is required."
 
 
+def test_unhandled_errors_return_stable_payload(monkeypatch):
+    error_client = TestClient(app, raise_server_exceptions=False)
+
+    async def fake_build_dig_response(request):
+        raise RuntimeError("upstream exploded")
+
+    monkeypatch.setattr("backend.app.routers.dig.build_dig_response", fake_build_dig_response)
+
+    response = error_client.post(
+        "/dig",
+        json={"query": "Radiohead Creep"},
+        headers={"X-Request-ID": "test-request-id"},
+    )
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": "Unexpected server error. Please try again shortly.",
+        "request_id": "test-request-id",
+    }
+    assert response.headers["X-Request-ID"] == "test-request-id"
+
+
+def test_successful_responses_include_request_id():
+    response = client.get("/health", headers={"X-Request-ID": "health-request-id"})
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"] == "health-request-id"
+
+
 def test_in_memory_rate_limiter_blocks_after_limit():
     limiter = InMemoryRateLimiter(window_seconds=60)
 

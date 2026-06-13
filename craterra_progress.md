@@ -1,9 +1,9 @@
 # Craterra Progress
-> Updated: 2026-06-11
+> Updated: 2026-06-12
 
 ## Current Status
 
-Craterra now has a working local MVP.
+Craterra now has a working deployed MVP.
 
 The app can:
 
@@ -22,11 +22,25 @@ The app can:
 13. Add ListenBrainz artist top recordings as a second candidate source
 14. Add Bandcamp and Apple Music outbound search links to recommendation cards
 15. Apply stronger dig curation rules for distance, rarity, same-artist avoidance, and bridge/difference reasons
+16. Return stable production error payloads with request ids for unexpected backend failures
+17. Emit structured JSON request logs with method, path, status, duration, client, and request id
 
 Local app URL:
 
 ```text
 http://127.0.0.1:8002
+```
+
+Production app URL:
+
+```text
+https://craterra-production.up.railway.app/
+```
+
+Production health URL:
+
+```text
+https://craterra-production.up.railway.app/health
 ```
 
 ## Implemented Backend
@@ -45,7 +59,7 @@ Implemented routes:
 | GET | `/health` | Done |
 | GET | `/validate` | Done |
 | POST | `/dig` | Done for local MVP |
-| POST | `/feedback` | Done with local JSONL storage |
+| POST | `/feedback` | Done with Supabase and local JSONL fallback |
 
 ### `/validate`
 
@@ -75,11 +89,12 @@ Current flow:
 Seed song
   -> Deezer normalization
   -> Last.fm similar tracks
+  -> ListenBrainz artist top recordings
   -> relative rarity scoring
   -> OpenRouter curation
   -> Deezer / MusicBrainz / iTunes validation
   -> recommendation cards
-  -> local dig history save
+  -> Supabase dig history save with local fallback
 ```
 
 OpenRouter models:
@@ -104,6 +119,12 @@ Candidate handling:
 ### `/feedback`
 
 Current storage:
+
+```text
+Supabase feedback table
+```
+
+Fallback storage:
 
 ```text
 data/feedback.jsonl
@@ -233,10 +254,11 @@ Confirmed working:
 
 - Python compile check
 - Static frontend serving
-- `/health`
-- `/validate`
-- `/feedback`
-- `/dig`
+- Production `/health`
+- Production `/`
+- Production `/validate`
+- Production `/feedback`
+- Production `/dig`
 - Last.fm API key
 - OpenRouter model config
 - Deezer validation
@@ -247,29 +269,32 @@ Confirmed working:
 - Railway deployment config added
 - In-memory rate limiting added for `/validate`, `/feedback`, and `/dig`
 - Stronger dig curation rules for less obvious, more adventurous recommendations
-- Local feedback storage
-- Local dig history storage
+- Supabase feedback storage
+- Supabase dig history storage
+- Railway production deployment
+- Structured JSON request logging
+- Stable 500 error response with request id
 
 Example verified `/dig` behavior:
 
 ```text
 status: 200
 model: deepseek/deepseek-v4-flash
-candidates: 25
+candidates: 35
 recommendations: 3
+next_step: Tune dig-pattern learning and share cards next.
 ```
 
 ## Known Limitations
 
-This is a local MVP, not a launch-ready service.
+This is a deployed MVP, not a fully launch-ready service.
 
 Still missing:
 
-- Railway / Vercel deployment
 - MusicBrainz relationship enrichment
 - Bandcamp affiliate program wiring
 - Mobile layout QA in a real browser
-- Production error handling
+- Broader production error handling around individual external API failures
 - Cost tracking
 - Share cards
 - Dig chain visualization
@@ -277,9 +302,10 @@ Still missing:
 ## Recommended Next Steps
 
 1. Test mobile layout in a real handheld browser
-2. Connect Railway project and deploy backend/frontend together
-3. Add production error handling and structured logging
-4. Decide whether Vercel split deploy is needed after first demo
+2. Add external API specific error boundaries and retry/backoff logging
+3. Add share cards
+4. Add dig chain visualization
+5. Decide whether Vercel split deploy is needed after first demo
 
 ## Important Notes
 
