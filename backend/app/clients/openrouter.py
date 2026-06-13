@@ -6,7 +6,13 @@ from pydantic import BaseModel, Field, ValidationError
 
 from backend.app.clients.http import api_client, request_with_retries
 from backend.app.config import get_settings
-from backend.app.schemas import CandidateTrack, CuratedPick, DigRequest, SessionTasteProfile
+from backend.app.schemas import (
+    CandidateTrack,
+    CuratedPick,
+    DigRequest,
+    OpenRouterUsage,
+    SessionTasteProfile,
+)
 
 OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -29,7 +35,7 @@ async def curate_candidates(
     session_profile: SessionTasteProfile | None = None,
     root_title: str | None = None,
     root_artist: str | None = None,
-) -> tuple[list[CuratedPick], str]:
+) -> tuple[list[CuratedPick], str, OpenRouterUsage | None]:
     settings = get_settings()
     if not settings.openrouter_api_key:
         raise OpenRouterNotConfiguredError("OPENROUTER_API_KEY is not configured.")
@@ -37,7 +43,7 @@ async def curate_candidates(
     errors: list[str] = []
     for model in (settings.openrouter_model, settings.openrouter_fallback_model):
         try:
-            picks = await _request_curation(
+            picks, usage = await _request_curation(
                 api_key=settings.openrouter_api_key,
                 model=model,
                 request=request,
@@ -46,7 +52,7 @@ async def curate_candidates(
                 root_title=root_title,
                 root_artist=root_artist,
             )
-            return picks, model
+            return picks, model, usage
         except OpenRouterCurationError as exc:
             errors.append(f"{model}: {exc}")
 
@@ -61,7 +67,7 @@ async def _request_curation(
     session_profile: SessionTasteProfile | None,
     root_title: str | None,
     root_artist: str | None,
-) -> list[CuratedPick]:
+) -> tuple[list[CuratedPick], OpenRouterUsage | None]:
     try:
         async with api_client() as client:
             response = await request_with_retries(
@@ -87,8 +93,10 @@ async def _request_curation(
     except httpx.HTTPError as exc:
         raise OpenRouterCurationError(str(exc)) from exc
 
+    response_data = response.json()
+
     try:
-        content = response.json()["choices"][0]["message"]["content"]
+        content = response_data["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:
         raise OpenRouterCurationError("Unexpected OpenRouter response shape.") from exc
 
@@ -105,7 +113,34 @@ async def _request_curation(
     if not picks:
         raise OpenRouterCurationError("Model returned no usable candidate indexes.")
 
-    return picks[:5]
+    return picks[:5], _extract_usage(response_data)
+
+
+def _extract_usage(response_data: dict[str, Any]) -> OpenRouterUsage | None:
+    usage = response_data.get("usage")
+    if not isinstance(usage, dict):
+        return None
+
+    return OpenRouterUsage(
+        prompt_tokens=_safe_int(usage.get("prompt_tokens")),
+        completion_tokens=_safe_int(usage.get("completion_tokens")),
+        total_tokens=_safe_int(usage.get("total_tokens")),
+        cost=_safe_float(usage.get("cost")),
+    )
+
+
+def _safe_int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _build_payload(

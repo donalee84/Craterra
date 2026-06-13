@@ -6,7 +6,14 @@ from threading import Lock
 from typing import Any
 
 from backend.app.config import get_settings
-from backend.app.schemas import DigRequest, FeedbackRequest, FeedbackResponse, RecommendationCard, SessionTasteProfile
+from backend.app.schemas import (
+    DigRequest,
+    FeedbackRequest,
+    FeedbackResponse,
+    OpenRouterUsage,
+    RecommendationCard,
+    SessionTasteProfile,
+)
 
 _LOCK = Lock()
 
@@ -73,17 +80,19 @@ def save_dig_history(
     request: DigRequest,
     recommendations: list[RecommendationCard],
     model_used: str | None,
+    usage: OpenRouterUsage | None = None,
 ) -> None:
     if not request.session_id:
         return
 
-    write_dig_history_record(build_dig_history_record(request, recommendations, model_used))
+    write_dig_history_record(build_dig_history_record(request, recommendations, model_used, usage))
 
 
 def build_dig_history_record(
     request: DigRequest,
     recommendations: list[RecommendationCard],
     model_used: str | None,
+    usage: OpenRouterUsage | None = None,
 ) -> dict[str, Any]:
     return {
         "session_id": request.session_id,
@@ -96,6 +105,7 @@ def build_dig_history_record(
             "mood_tags": request.mood_tags,
         },
         "model_used": model_used,
+        "usage": usage.model_dump() if usage else None,
         "recommendations": [
             {
                 "song_name": recommendation.title,

@@ -9,7 +9,15 @@ from backend.app.clients.http import request_with_retries
 from backend.app.config import get_settings
 from backend.app.main import app
 from backend.app.middleware.rate_limit import InMemoryRateLimiter
-from backend.app.schemas import CandidateTrack, DigResponse, TrackValidationResult, ValidateResponse
+from backend.app.schemas import (
+    CandidateTrack,
+    DigRequest,
+    DigResponse,
+    OpenRouterUsage,
+    TrackValidationResult,
+    ValidateResponse,
+)
+from backend.app.services.local_store import build_dig_history_record
 from backend.app.services.dig import _prepare_curation_candidates
 
 
@@ -150,6 +158,56 @@ def test_request_with_retries_retries_transient_status():
 
     assert response.status_code == 200
     assert attempts == 2
+
+
+def test_dig_response_can_include_openrouter_usage(monkeypatch):
+    async def fake_build_dig_response(request) -> DigResponse:
+        return DigResponse(
+            query=request.query,
+            candidates=[],
+            recommendations=[],
+            model_used="test/model",
+            usage=OpenRouterUsage(
+                prompt_tokens=100,
+                completion_tokens=20,
+                total_tokens=120,
+                cost=0.0012,
+            ),
+            next_step="ok",
+        )
+
+    monkeypatch.setattr("backend.app.routers.dig.build_dig_response", fake_build_dig_response)
+
+    response = client.post("/dig", json={"query": "Radiohead Creep"})
+
+    assert response.status_code == 200
+    assert response.json()["usage"] == {
+        "prompt_tokens": 100,
+        "completion_tokens": 20,
+        "total_tokens": 120,
+        "cost": 0.0012,
+    }
+
+
+def test_dig_history_record_includes_usage():
+    record = build_dig_history_record(
+        DigRequest(query="Radiohead Creep", session_id="test-session"),
+        recommendations=[],
+        model_used="test/model",
+        usage=OpenRouterUsage(
+            prompt_tokens=100,
+            completion_tokens=20,
+            total_tokens=120,
+            cost=0.0012,
+        ),
+    )
+
+    assert record["usage"] == {
+        "prompt_tokens": 100,
+        "completion_tokens": 20,
+        "total_tokens": 120,
+        "cost": 0.0012,
+    }
 
 
 def test_in_memory_rate_limiter_blocks_after_limit():

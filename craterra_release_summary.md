@@ -45,6 +45,7 @@ Expected health response:
 - Structured JSON request logs with request ids
 - Stable 500 error payloads for unexpected backend failures
 - External API retry/backoff logging for transient 429/5xx and network failures
+- OpenRouter token and cost tracking in `/dig` responses, dig history, and logs
 - Railway deployment from GitHub
 
 ## Final Production Smoke Test
@@ -134,4 +135,3 @@ APPLE_MUSIC_AFFILIATE_TOKEN=
 - Test mobile layout on a real phone browser
 - Add MusicBrainz relationship enrichment
 - Wire real Bandcamp affiliate flow
-- Add cost tracking for OpenRouter calls

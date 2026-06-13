@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import HTTPException, status
 
 from backend.app.clients.lastfm import (
@@ -65,7 +67,7 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
     )
 
     try:
-        picks, model_used = await curate_candidates(
+        picks, model_used, usage = await curate_candidates(
             request,
             curation_candidates,
             session_profile=session_profile,
@@ -102,14 +104,32 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
             )
         )
 
-    await save_dig_history(request, recommendations, model_used)
+    _log_openrouter_usage(model_used, usage)
+    await save_dig_history(request, recommendations, model_used, usage)
 
     return DigResponse(
         query=request.query,
         candidates=candidates,
         recommendations=recommendations,
         model_used=model_used,
+        usage=usage,
         next_step="Tune dig-pattern learning and share cards next.",
+    )
+
+
+def _log_openrouter_usage(model_used, usage) -> None:
+    if not usage:
+        return
+
+    logging.getLogger("craterra.cost").info(
+        "openrouter_usage",
+        extra={
+            "model": model_used,
+            "prompt_tokens": usage.prompt_tokens,
+            "completion_tokens": usage.completion_tokens,
+            "total_tokens": usage.total_tokens,
+            "cost": usage.cost,
+        },
     )
 
 

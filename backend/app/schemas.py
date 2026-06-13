@@ -79,6 +79,13 @@ class CuratedPick(BaseModel):
     confidence: float = Field(default=0.75, ge=0.0, le=1.0)
 
 
+class OpenRouterUsage(BaseModel):
+    prompt_tokens: int | None = Field(default=None, ge=0)
+    completion_tokens: int | None = Field(default=None, ge=0)
+    total_tokens: int | None = Field(default=None, ge=0)
+    cost: float | None = Field(default=None, ge=0.0)
+
+
 class OutboundLink(BaseModel):
     service: Literal["bandcamp", "apple_music"]
     label: str
@@ -103,4 +110,5 @@ class DigResponse(BaseModel):
     candidates: list[CandidateTrack]
     recommendations: list[RecommendationCard] = Field(default_factory=list)
     model_used: str | None = None
+    usage: OpenRouterUsage | None = None
     next_step: str

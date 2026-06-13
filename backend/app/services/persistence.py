@@ -5,7 +5,14 @@ from backend.app.clients.supabase import (
     insert_feedback,
     is_supabase_configured,
 )
-from backend.app.schemas import DigRequest, FeedbackRequest, FeedbackResponse, RecommendationCard, SessionTasteProfile
+from backend.app.schemas import (
+    DigRequest,
+    FeedbackRequest,
+    FeedbackResponse,
+    OpenRouterUsage,
+    RecommendationCard,
+    SessionTasteProfile,
+)
 from backend.app.services import local_store
 
 
@@ -46,11 +53,12 @@ async def save_dig_history(
     request: DigRequest,
     recommendations: list[RecommendationCard],
     model_used: str | None,
+    usage: OpenRouterUsage | None = None,
 ) -> None:
     if not request.session_id:
         return
 
-    record = local_store.build_dig_history_record(request, recommendations, model_used)
+    record = local_store.build_dig_history_record(request, recommendations, model_used, usage)
 
     if is_supabase_configured():
         try:

@@ -27,6 +27,7 @@ The app can:
 18. Retry transient external API failures and log external API retries/errors without exposing query params or keys
 19. Add recommendation share actions with native share and clipboard fallback
 20. Show the current dig chain with clear and jump-back controls
+21. Track OpenRouter token usage and cost in `/dig` responses, dig history, and structured logs
 
 Local app URL:
 
@@ -282,6 +283,7 @@ Confirmed working:
 - External API retry/backoff logging for transient 429/5xx and network failures
 - Recommendation share actions in production
 - Dig chain visualization in the frontend
+- OpenRouter token and cost tracking
 
 Example verified `/dig` behavior:
 
@@ -302,15 +304,12 @@ Still missing:
 - MusicBrainz relationship enrichment
 - Bandcamp affiliate program wiring
 - Mobile layout QA in a real browser
-- Cost tracking
-- Dig chain visualization
 
 ## Recommended Next Steps
 
 1. Test mobile layout in a real handheld browser
-2. Add dig chain visualization
-3. Add cost tracking for OpenRouter calls
-4. Decide whether Vercel split deploy is needed after first demo
+2. Add MusicBrainz relationship enrichment
+3. Decide whether Vercel split deploy is needed after first demo
 
 ## Important Notes
 
