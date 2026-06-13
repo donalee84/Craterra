@@ -42,6 +42,7 @@ Expected health response:
 - In-memory rate limits for `/validate`, `/feedback`, and `/dig`
 - Structured JSON request logs with request ids
 - Stable 500 error payloads for unexpected backend failures
+- External API retry/backoff logging for transient 429/5xx and network failures
 - Railway deployment from GitHub
 
 ## Final Production Smoke Test
@@ -127,7 +128,6 @@ APPLE_MUSIC_AFFILIATE_TOKEN=
 ## Remaining Work
 
 - Test mobile layout on a real phone browser
-- Add external API specific retry/backoff logging and error boundaries
 - Add share cards
 - Add dig chain visualization
 - Add MusicBrainz relationship enrichment

@@ -2,7 +2,7 @@ from typing import Any
 
 import httpx
 
-from backend.app.clients.http import api_client
+from backend.app.clients.http import api_client, request_with_retries
 from backend.app.schemas import CandidateTrack
 
 LISTENBRAINZ_API_URL = "https://api.listenbrainz.org"
@@ -23,8 +23,11 @@ async def get_artist_top_recordings(
 
     try:
         async with api_client() as client:
-            response = await client.get(
+            response = await request_with_retries(
+                client,
+                "GET",
                 f"{LISTENBRAINZ_API_URL}/1/popularity/top-recordings-for-artist/{artist_mbid}",
+                service="listenbrainz",
                 params={"count": limit},
             )
             response.raise_for_status()
@@ -41,8 +44,11 @@ async def get_artist_top_recordings(
 async def _lookup_artist_mbid(artist_name: str) -> str | None:
     try:
         async with api_client() as client:
-            response = await client.get(
+            response = await request_with_retries(
+                client,
+                "GET",
                 MUSICBRAINZ_ARTIST_URL,
+                service="musicbrainz",
                 params={
                     "query": f'artist:"{artist_name}"',
                     "fmt": "json",

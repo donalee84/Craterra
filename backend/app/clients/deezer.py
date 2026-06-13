@@ -2,7 +2,7 @@ from typing import Any
 
 import httpx
 
-from backend.app.clients.http import api_client
+from backend.app.clients.http import api_client, request_with_retries
 from backend.app.schemas import TrackValidationResult
 
 DEEZER_SEARCH_URL = "https://api.deezer.com/search"
@@ -11,7 +11,13 @@ DEEZER_SEARCH_URL = "https://api.deezer.com/search"
 async def search_deezer(query: str) -> TrackValidationResult | None:
     try:
         async with api_client() as client:
-            response = await client.get(DEEZER_SEARCH_URL, params={"q": query, "limit": 1})
+            response = await request_with_retries(
+                client,
+                "GET",
+                DEEZER_SEARCH_URL,
+                service="deezer",
+                params={"q": query, "limit": 1},
+            )
             response.raise_for_status()
     except httpx.HTTPError:
         return None
@@ -35,4 +41,3 @@ async def search_deezer(query: str) -> TrackValidationResult | None:
         external_url=track.get("link"),
         confidence=0.92,
     )
-

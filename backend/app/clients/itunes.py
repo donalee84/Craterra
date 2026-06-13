@@ -2,7 +2,7 @@ from typing import Any
 
 import httpx
 
-from backend.app.clients.http import api_client
+from backend.app.clients.http import api_client, request_with_retries
 from backend.app.schemas import TrackValidationResult
 
 ITUNES_SEARCH_URL = "https://itunes.apple.com/search"
@@ -11,8 +11,11 @@ ITUNES_SEARCH_URL = "https://itunes.apple.com/search"
 async def search_itunes(query: str) -> TrackValidationResult | None:
     try:
         async with api_client() as client:
-            response = await client.get(
+            response = await request_with_retries(
+                client,
+                "GET",
                 ITUNES_SEARCH_URL,
+                service="itunes",
                 params={"term": query, "media": "music", "entity": "song", "limit": 1},
             )
             response.raise_for_status()
@@ -36,4 +39,3 @@ async def search_itunes(query: str) -> TrackValidationResult | None:
         external_url=track.get("trackViewUrl"),
         confidence=0.72,
     )
-

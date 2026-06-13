@@ -1,8 +1,11 @@
 from pathlib import Path
 
+import anyio
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+import httpx
 
+from backend.app.clients.http import request_with_retries
 from backend.app.config import get_settings
 from backend.app.main import app
 from backend.app.middleware.rate_limit import InMemoryRateLimiter
@@ -120,6 +123,33 @@ def test_successful_responses_include_request_id():
 
     assert response.status_code == 200
     assert response.headers["X-Request-ID"] == "health-request-id"
+
+
+def test_request_with_retries_retries_transient_status():
+    attempts = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            return httpx.Response(503)
+        return httpx.Response(200, json={"ok": True})
+
+    async def run_request() -> httpx.Response:
+        transport = httpx.MockTransport(handler)
+        async with httpx.AsyncClient(transport=transport) as test_client:
+            return await request_with_retries(
+                test_client,
+                "GET",
+                "https://example.test/resource",
+                service="test",
+                backoff_seconds=0,
+            )
+
+    response = anyio.run(run_request)
+
+    assert response.status_code == 200
+    assert attempts == 2
 
 
 def test_in_memory_rate_limiter_blocks_after_limit():

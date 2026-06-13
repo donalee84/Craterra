@@ -24,6 +24,7 @@ The app can:
 15. Apply stronger dig curation rules for distance, rarity, same-artist avoidance, and bridge/difference reasons
 16. Return stable production error payloads with request ids for unexpected backend failures
 17. Emit structured JSON request logs with method, path, status, duration, client, and request id
+18. Retry transient external API failures and log external API retries/errors without exposing query params or keys
 
 Local app URL:
 
@@ -274,6 +275,7 @@ Confirmed working:
 - Railway production deployment
 - Structured JSON request logging
 - Stable 500 error response with request id
+- External API retry/backoff logging for transient 429/5xx and network failures
 
 Example verified `/dig` behavior:
 
@@ -294,7 +296,6 @@ Still missing:
 - MusicBrainz relationship enrichment
 - Bandcamp affiliate program wiring
 - Mobile layout QA in a real browser
-- Broader production error handling around individual external API failures
 - Cost tracking
 - Share cards
 - Dig chain visualization
@@ -302,9 +303,9 @@ Still missing:
 ## Recommended Next Steps
 
 1. Test mobile layout in a real handheld browser
-2. Add external API specific error boundaries and retry/backoff logging
-3. Add share cards
-4. Add dig chain visualization
+2. Add share cards
+3. Add dig chain visualization
+4. Add cost tracking for OpenRouter calls
 5. Decide whether Vercel split deploy is needed after first demo
 
 ## Important Notes

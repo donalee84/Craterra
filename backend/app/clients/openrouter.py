@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel, Field, ValidationError
 
-from backend.app.clients.http import api_client
+from backend.app.clients.http import api_client, request_with_retries
 from backend.app.config import get_settings
 from backend.app.schemas import CandidateTrack, CuratedPick, DigRequest, SessionTasteProfile
 
@@ -64,8 +64,11 @@ async def _request_curation(
 ) -> list[CuratedPick]:
     try:
         async with api_client() as client:
-            response = await client.post(
+            response = await request_with_retries(
+                client,
+                "POST",
                 OPENROUTER_CHAT_URL,
+                service="openrouter",
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",

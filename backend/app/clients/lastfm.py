@@ -2,7 +2,7 @@ from typing import Any
 
 import httpx
 
-from backend.app.clients.http import api_client
+from backend.app.clients.http import api_client, request_with_retries
 from backend.app.config import get_settings
 from backend.app.schemas import CandidateTrack
 
@@ -61,8 +61,11 @@ async def get_candidate_tracks(
 async def _track_search(query: str, api_key: str, limit: int) -> list[dict[str, Any]]:
     try:
         async with api_client() as client:
-            response = await client.get(
+            response = await request_with_retries(
+                client,
+                "GET",
                 LASTFM_API_URL,
+                service="lastfm",
                 params={
                     "method": "track.search",
                     "track": query,
@@ -92,8 +95,11 @@ async def _track_get_similar(
 
     try:
         async with api_client() as client:
-            response = await client.get(
+            response = await request_with_retries(
+                client,
+                "GET",
                 LASTFM_API_URL,
+                service="lastfm",
                 params={
                     "method": "track.getSimilar",
                     "track": title,

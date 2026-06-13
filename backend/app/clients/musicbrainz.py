@@ -2,7 +2,7 @@ from typing import Any
 
 import httpx
 
-from backend.app.clients.http import api_client
+from backend.app.clients.http import api_client, request_with_retries
 from backend.app.schemas import TrackValidationResult
 
 MUSICBRAINZ_SEARCH_URL = "https://musicbrainz.org/ws/2/recording"
@@ -11,8 +11,11 @@ MUSICBRAINZ_SEARCH_URL = "https://musicbrainz.org/ws/2/recording"
 async def search_musicbrainz(query: str) -> TrackValidationResult | None:
     try:
         async with api_client() as client:
-            response = await client.get(
+            response = await request_with_retries(
+                client,
+                "GET",
                 MUSICBRAINZ_SEARCH_URL,
+                service="musicbrainz",
                 params={"query": query, "fmt": "json", "limit": 1},
                 headers={"User-Agent": "Craterra/0.1.0 (local-development)"},
             )
@@ -44,4 +47,3 @@ async def search_musicbrainz(query: str) -> TrackValidationResult | None:
         external_url=None,
         confidence=0.8,
     )
-
