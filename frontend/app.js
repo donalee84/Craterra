@@ -9,11 +9,26 @@ const challengeInput = document.querySelector("#challenge");
 const results = document.querySelector("#results");
 const statusEl = document.querySelector("#status");
 const template = document.querySelector("#card-template");
+const chainEl = document.querySelector("#dig-chain");
+const chainList = document.querySelector("#chain-list");
+const chainClear = document.querySelector("#chain-clear");
 
 const sessionId = getSessionId();
+const chainStorageKey = "craterra_dig_chain";
+let digChain = loadDigChain();
+let pendingChain = null;
+
+renderDigChain();
 
 distanceInput.addEventListener("input", () => {
   distanceOutput.value = distanceInput.value;
+});
+
+chainClear.addEventListener("click", () => {
+  digChain = [];
+  pendingChain = null;
+  saveDigChain();
+  renderDigChain();
 });
 
 form.addEventListener("submit", async (event) => {
@@ -21,6 +36,8 @@ form.addEventListener("submit", async (event) => {
   const query = queryInput.value.trim();
   if (!query) return;
 
+  const proposedChain = pendingChain || [makeChainItem({ query })];
+  pendingChain = null;
   setStatus("Digging");
   results.innerHTML = `<div class="empty"><h2>Digging...</h2><p>Building candidates and asking the curator.</p></div>`;
 
@@ -50,6 +67,9 @@ form.addEventListener("submit", async (event) => {
     }
 
     renderRecommendations(data.recommendations || []);
+    digChain = proposedChain;
+    saveDigChain();
+    renderDigChain();
     setStatus(`${data.recommendations.length} picks`);
   } catch (error) {
     results.innerHTML = `<div class="empty"><h2>Could not dig.</h2><p>${escapeHtml(error.message)}</p></div>`;
@@ -109,12 +129,81 @@ function renderRecommendations(recommendations) {
     });
     card.querySelector(".continue").addEventListener("click", () => {
       queryInput.value = `${recommendation.artist} ${recommendation.title}`;
+      pendingChain = appendChainItem(digChain, makeChainItem(recommendation));
       form.requestSubmit();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     results.append(card);
   });
+}
+
+function renderDigChain() {
+  chainList.innerHTML = "";
+  chainEl.hidden = !digChain.length;
+
+  digChain.forEach((item, index) => {
+    const node = document.createElement("li");
+    node.className = index === digChain.length - 1 ? "chain-item chain-current" : "chain-item";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = item.label;
+    button.addEventListener("click", () => {
+      queryInput.value = item.query;
+      pendingChain = digChain.slice(0, index + 1);
+      form.requestSubmit();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    node.append(button);
+    chainList.append(node);
+  });
+}
+
+function makeChainItem(source) {
+  const query =
+    source.query ||
+    [source.artist, source.title]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+  const label =
+    source.artist && source.title ? `${source.artist} - ${source.title}` : query;
+
+  return {
+    query,
+    label,
+  };
+}
+
+function appendChainItem(chain, item) {
+  const nextChain = chain.length ? [...chain] : [makeChainItem({ query: queryInput.value.trim() })];
+  const last = nextChain[nextChain.length - 1];
+  if (!last || normalizeChainKey(last.query) !== normalizeChainKey(item.query)) {
+    nextChain.push(item);
+  }
+  return nextChain.slice(-8);
+}
+
+function loadDigChain() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(chainStorageKey) || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => item && typeof item.query === "string" && typeof item.label === "string")
+      .slice(-8);
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveDigChain() {
+  localStorage.setItem(chainStorageKey, JSON.stringify(digChain));
+}
+
+function normalizeChainKey(value) {
+  return value.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
 async function shareRecommendation(recommendation) {

@@ -34,8 +34,10 @@ Expected health response:
 - Deezer -> MusicBrainz -> iTunes validation fallback
 - Recommendation cards with artwork and preview audio
 - Bandcamp and Apple Music outbound search links
+- Recommendation share actions
 - Like / Skip feedback
 - Continue digging from a recommendation
+- Session dig-chain display
 - Supabase feedback persistence
 - Supabase dig-history persistence
 - Local JSONL fallback when Supabase is unavailable
@@ -85,9 +87,11 @@ https://github.com/donalee84/Craterra
 Latest pushed commits:
 
 ```text
+708a704 Trigger Railway redeploy
+4c7945d Add recommendation share actions
+e99a81e Add external API retry logging
+bacb112 Add structured request logging
 8f2bcaf Trigger Railway redeploy
-f4dede9 Tune dig curation behavior
-1e03e56 Prepare Craterra MVP for Railway
 ```
 
 Railway active deployment:
@@ -128,8 +132,6 @@ APPLE_MUSIC_AFFILIATE_TOKEN=
 ## Remaining Work
 
 - Test mobile layout on a real phone browser
-- Add share cards
-- Add dig chain visualization
 - Add MusicBrainz relationship enrichment
 - Wire real Bandcamp affiliate flow
 - Add cost tracking for OpenRouter calls

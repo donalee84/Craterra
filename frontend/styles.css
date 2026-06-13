@@ -173,6 +173,66 @@ output {
   margin-top: 18px;
 }
 
+.chain {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  background: #0e1013;
+  padding: 12px;
+}
+
+.chain-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.chain-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chain-item {
+  min-width: 0;
+}
+
+.chain-item button,
+.chain-clear {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chain-item button {
+  max-width: 260px;
+  padding: 0 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chain-current button {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.chain-clear {
+  padding: 0 9px;
+  color: var(--muted);
+}
+
 .empty,
 .track-card {
   border: 1px solid var(--line);
@@ -358,6 +418,16 @@ output {
   .track-card {
     grid-template-columns: 1fr;
     max-width: 100%;
+  }
+
+  .chain-list {
+    display: grid;
+  }
+
+  .chain-item button {
+    width: 100%;
+    max-width: none;
+    text-align: left;
   }
 
   .track-title {
