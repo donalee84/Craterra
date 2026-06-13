@@ -318,7 +318,8 @@ Still missing:
 1. Test mobile layout in a real handheld browser
 2. Apply the `outbound_clicks` Supabase schema in production
 3. Revisit Bandcamp affiliate wiring if Bandcamp exposes a public affiliate or partner flow
-4. Decide whether Vercel split deploy is needed after first demo
+4. Start feedback-first promotion using `craterra_promotion_plan.md`
+5. Decide whether Vercel split deploy is needed after first demo
 
 ## Important Notes
 

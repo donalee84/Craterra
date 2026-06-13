@@ -140,3 +140,4 @@ APPLE_MUSIC_AFFILIATE_TOKEN=
 - Test mobile layout on a real phone browser
 - Apply `outbound_clicks` Supabase schema in production
 - Revisit Bandcamp affiliate wiring if Bandcamp exposes a public affiliate or partner flow
+- Start feedback-first promotion using `craterra_promotion_plan.md`
