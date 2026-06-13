@@ -91,6 +91,7 @@ h1 {
 .field {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .field span {
@@ -108,6 +109,7 @@ h1 {
   padding: 0 12px;
   color: var(--muted);
   background: #0e1013;
+  min-width: 0;
 }
 
 .toggle input {
@@ -119,6 +121,7 @@ h1 {
 input[type="search"],
 input[type="text"] {
   width: 100%;
+  min-width: 0;
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -397,6 +400,14 @@ output {
     width: 100%;
     max-width: min(100%, 342px);
     margin: 0;
+  }
+
+  .field-main,
+  .field,
+  .field-small,
+  .toggle,
+  .primary {
+    min-width: 0;
   }
 
   h1 {

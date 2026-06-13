@@ -46,6 +46,7 @@ Expected health response:
 - Stable 500 error payloads for unexpected backend failures
 - External API retry/backoff logging for transient 429/5xx and network failures
 - OpenRouter token and cost tracking in `/dig` responses, dig history, and logs
+- Mobile and desktop viewport QA screenshots
 - Railway deployment from GitHub
 
 ## Final Production Smoke Test

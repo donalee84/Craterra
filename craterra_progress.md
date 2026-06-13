@@ -284,6 +284,7 @@ Confirmed working:
 - Recommendation share actions in production
 - Dig chain visualization in the frontend
 - OpenRouter token and cost tracking
+- Mobile and desktop viewport QA screenshots generated on 2026-06-14
 
 Example verified `/dig` behavior:
 
