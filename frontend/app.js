@@ -18,6 +18,7 @@ const sessionId = getSessionId();
 const chainStorageKey = "craterra_dig_chain";
 let digChain = loadDigChain();
 let pendingChain = null;
+let digController = null;
 
 renderDigChain();
 
@@ -34,6 +35,7 @@ chainClear.addEventListener("click", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (digController) return;
   const song = queryInput.value.trim();
   if (!song) return;
   const artist = artistInput.value.trim();
@@ -41,8 +43,10 @@ form.addEventListener("submit", async (event) => {
 
   const proposedChain = pendingChain || [makeChainItem({ query, artist, title: song })];
   pendingChain = null;
+  digController = new AbortController();
   setStatus("Digging");
-  results.innerHTML = `<div class="empty"><h2>Digging...</h2><p>Building candidates and asking the curator.</p></div>`;
+  results.innerHTML = `<div class="empty"><h2>Digging&hellip;</h2><p>Building candidates and asking the curator.</p><button class="cancel-dig" type="button">Cancel dig</button></div>`;
+  results.querySelector(".cancel-dig").addEventListener("click", () => digController?.abort());
 
   try {
     const payload = {
@@ -62,6 +66,7 @@ form.addEventListener("submit", async (event) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: digController.signal,
     });
     const data = await response.json();
 
@@ -75,8 +80,15 @@ form.addEventListener("submit", async (event) => {
     renderDigChain();
     setStatus(`${data.recommendations.length} picks`);
   } catch (error) {
-    results.innerHTML = `<div class="empty"><h2>Could not dig.</h2><p>${escapeHtml(error.message)}</p></div>`;
-    setStatus("Error");
+    if (error.name === "AbortError") {
+      results.innerHTML = `<div class="empty"><h2>Dig canceled.</h2><p>Adjust your seed and dig again when you're ready.</p></div>`;
+      setStatus("Canceled");
+    } else {
+      results.innerHTML = `<div class="empty"><h2>Could not dig.</h2><p>${escapeHtml(error.message)}</p></div>`;
+      setStatus("Error");
+    }
+  } finally {
+    digController = null;
   }
 });
 

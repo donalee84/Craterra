@@ -281,6 +281,18 @@ output {
   font-size: 26px;
 }
 
+.cancel-dig {
+  margin-top: 18px;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--danger);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .empty p {
   margin: 0;
   color: var(--muted);
