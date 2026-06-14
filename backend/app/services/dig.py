@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import HTTPException, status
 
@@ -175,6 +176,10 @@ def _prepare_curation_candidates(
         )
     ]
 
+    non_filler = [candidate for candidate in without_seed if not _is_filler_track(candidate.title)]
+    if len(non_filler) >= min(8, limit):
+        without_seed = non_filler
+
     if distance_level >= 2 and root_artist_key:
         other_artists = [
             candidate
@@ -242,6 +247,13 @@ def _relative_rarity_label(score: float) -> str:
     if score >= 0.28:
         return "Mid-known"
     return "Obvious"
+
+
+_FILLER_TITLE_RE = re.compile(r"\b(interlude|intro|outro|skit|skits)\b", re.IGNORECASE)
+
+
+def _is_filler_track(title: str | None) -> bool:
+    return bool(title and _FILLER_TITLE_RE.search(title))
 
 
 def _normalize_key(value: str | None) -> str:

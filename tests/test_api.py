@@ -294,6 +294,34 @@ def test_in_memory_rate_limiter_evicts_idle_clients():
     assert set(limiter._requests) == {"three:/dig"}
 
 
+def test_prepare_curation_candidates_drops_filler_tracks():
+    candidates = [
+        CandidateTrack(title="Intro", artist="Artist A", source="test", rarity_score=0.9),
+        CandidateTrack(title="Album Interlude", artist="Artist B", source="test", rarity_score=0.9),
+        CandidateTrack(title="Skit", artist="Artist C", source="test", rarity_score=0.9),
+        CandidateTrack(title="Introspection", artist="Artist D", source="test", rarity_score=0.9),
+        *[
+            CandidateTrack(title=f"Real Song {i}", artist=f"Band {i}", source="test", rarity_score=0.5)
+            for i in range(8)
+        ],
+    ]
+
+    prepared = _prepare_curation_candidates(
+        candidates,
+        root_title=None,
+        root_artist=None,
+        distance_level=1,
+        limit=18,
+    )
+
+    titles = [candidate.title for candidate in prepared]
+    assert "Intro" not in titles
+    assert "Album Interlude" not in titles
+    assert "Skit" not in titles
+    assert "Introspection" in titles  # substring "intro" must not trigger the filter
+    assert len(prepared) == 9
+
+
 def test_prepare_curation_candidates_filters_seed_and_root_artist_for_digging():
     candidates = [
         CandidateTrack(title="Creep", artist="Radiohead", source="test", rarity_score=0.1),

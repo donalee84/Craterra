@@ -233,7 +233,8 @@ def _build_payload(
                     "difference from the root, such as genre, era, region, scene, energy, texture, "
                     "instrumentation, or production lineage. Avoid disliked session patterns and "
                     "lean into liked session patterns when they are present. "
-                    "Never invent songs. Do not mention internal scores or APIs."
+                    "Avoid interludes, intros, outros, and skits unless they stand alone as a "
+                    "full track. Never invent songs. Do not mention internal scores or APIs."
                 ),
             },
             {
