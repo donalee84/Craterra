@@ -205,13 +205,20 @@ def _rarity_label(score: float | None) -> str | None:
 
 
 def _raise_for_lastfm_error(response: httpx.Response) -> None:
-    if response.status_code < 400:
-        return
+    if response.status_code >= 400:
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise LastFmApiError(f"Last.fm returned HTTP {response.status_code}.") from exc
+        message = data.get("message") or f"HTTP {response.status_code}"
+        raise LastFmApiError(f"Last.fm API error: {message}")
 
+    # Last.fm reports API errors (e.g. invalid key) as HTTP 200 with an error
+    # field, so guard against silently treating them as empty results.
     try:
         data = response.json()
-    except ValueError as exc:
-        raise LastFmApiError(f"Last.fm returned HTTP {response.status_code}.") from exc
-
-    message = data.get("message") or f"HTTP {response.status_code}"
-    raise LastFmApiError(f"Last.fm API error: {message}")
+    except ValueError:
+        return
+    if isinstance(data, dict) and data.get("error"):
+        message = data.get("message") or f"error {data.get('error')}"
+        raise LastFmApiError(f"Last.fm API error: {message}")
