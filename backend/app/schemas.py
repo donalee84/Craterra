@@ -56,7 +56,7 @@ class FeedbackResponse(BaseModel):
 
 class OutboundClickRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=120)
-    service: Literal["bandcamp", "apple_music"]
+    service: Literal["bandcamp", "apple_music", "youtube"]
     song_name: str = Field(min_length=1, max_length=200)
     artist_name: str = Field(min_length=1, max_length=200)
     url: HttpUrl
@@ -101,7 +101,7 @@ class OpenRouterUsage(BaseModel):
 
 
 class OutboundLink(BaseModel):
-    service: Literal["bandcamp", "apple_music"]
+    service: Literal["bandcamp", "apple_music", "youtube"]
     label: str
     url: HttpUrl
 

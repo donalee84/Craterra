@@ -8,6 +8,11 @@ def build_outbound_links(artist: str, title: str) -> list[OutboundLink]:
     query = f"{artist} {title}".strip()
     return [
         OutboundLink(
+            service="youtube",
+            label="YouTube",
+            url=f"https://www.youtube.com/results?{urlencode({'search_query': query})}",
+        ),
+        OutboundLink(
             service="bandcamp",
             label="Bandcamp",
             url=f"https://bandcamp.com/search?{urlencode({'q': query})}",
