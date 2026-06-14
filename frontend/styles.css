@@ -351,8 +351,53 @@ output {
 }
 
 .preview {
-  width: 100%;
+  display: none;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-toggle {
+  flex: none;
+  width: 36px;
   height: 36px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent no-repeat center / 13px 13px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 14 14" fill="%23c5f56a"><path d="M3 2l9 5-9 5z"/></svg>');
+}
+
+.player.is-playing .player-toggle {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 14 14" fill="%23c5f56a"><rect x="3" y="2" width="3" height="10"/><rect x="8" y="2" width="3" height="10"/></svg>');
+}
+
+.player-track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.player-progress {
+  width: 0%;
+  height: 100%;
+  background: var(--accent);
+}
+
+.player-time {
+  flex: none;
+  min-width: 38px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .actions {
@@ -387,28 +432,14 @@ output {
   border-radius: 6px;
 }
 
-.outbound-bandcamp {
-  border-color: var(--accent);
-}
-
-.outbound-apple_music {
-  border-color: var(--accent-2);
-}
-
 .like {
   border-color: var(--accent);
-}
-
-.continue {
-  border-color: var(--accent-2);
-}
-
-.share {
-  border-color: #d6b7ff;
+  color: var(--accent);
 }
 
 .dislike {
   border-color: var(--danger);
+  color: var(--danger);
 }
 
 .vote[disabled] {

@@ -111,7 +111,12 @@
           </div>
           <p class="reason"></p>
           <ul class="relationship-summary"></ul>
-          <audio class="preview" controls></audio>
+          <div class="player" hidden>
+            <button class="player-toggle" type="button" aria-label="Play preview"></button>
+            <div class="player-track"><div class="player-progress"></div></div>
+            <span class="player-time">0:30</span>
+            <audio class="preview" preload="none"></audio>
+          </div>
           <div class="outbound-links"></div>
           <div class="actions">
             <a class="external" target="_blank" rel="noreferrer">Open</a>

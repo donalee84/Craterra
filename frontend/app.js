@@ -108,11 +108,13 @@ function renderRecommendations(recommendations) {
       showArtworkPlaceholder(artwork);
     }
 
+    const player = card.querySelector(".player");
     const preview = card.querySelector(".preview");
     if (validation.preview_url) {
       preview.src = validation.preview_url;
+      setupPlayer(player, preview);
     } else {
-      preview.remove();
+      player.remove();
     }
 
     const external = card.querySelector(".external");
@@ -143,6 +145,54 @@ function renderRecommendations(recommendations) {
 
     results.append(card);
   });
+}
+
+function setupPlayer(player, audio) {
+  player.hidden = false;
+  const toggle = player.querySelector(".player-toggle");
+  const track = player.querySelector(".player-track");
+  const progress = player.querySelector(".player-progress");
+  const time = player.querySelector(".player-time");
+
+  toggle.addEventListener("click", () => {
+    if (audio.paused) {
+      document.querySelectorAll("audio.preview").forEach((other) => {
+        if (other !== audio) other.pause();
+      });
+      audio.play().catch(() => setStatus("Preview unavailable"));
+    } else {
+      audio.pause();
+    }
+  });
+
+  audio.addEventListener("play", () => player.classList.add("is-playing"));
+  audio.addEventListener("pause", () => player.classList.remove("is-playing"));
+  audio.addEventListener("ended", () => {
+    player.classList.remove("is-playing");
+    progress.style.width = "0%";
+  });
+  audio.addEventListener("loadedmetadata", () => {
+    time.textContent = formatTime(audio.duration);
+  });
+  audio.addEventListener("timeupdate", () => {
+    const ratio = audio.duration ? audio.currentTime / audio.duration : 0;
+    progress.style.width = `${ratio * 100}%`;
+    time.textContent = formatTime(audio.duration - audio.currentTime);
+  });
+
+  track.addEventListener("click", (event) => {
+    if (!audio.duration) return;
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * audio.duration;
+  });
+}
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.floor(seconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${remainder}`;
 }
 
 function showArtworkPlaceholder(artwork) {
