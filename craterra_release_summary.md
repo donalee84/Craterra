@@ -137,7 +137,11 @@ APPLE_MUSIC_AFFILIATE_TOKEN=
 
 ## Remaining Work
 
-- Test mobile layout on a real phone browser
-- Apply `outbound_clicks` Supabase schema in production
-- Revisit Bandcamp affiliate wiring if Bandcamp exposes a public affiliate or partner flow
-- Start feedback-first promotion using `craterra_promotion_plan.md`
+- Eyeball mobile layout on a real phone browser (CSS simplified 2026-06-14; code-safe but unverified on device)
+- Apply `outbound_clicks` Supabase schema in production — paste `docs/outbound_clicks_schema.sql` in the Supabase SQL editor (only missing table; the other four exist)
+- Start feedback-first promotion using `docs/launch_ready.md` (post manually)
+
+## Resolved 2026-06-14
+
+- Bandcamp affiliate: confirmed no official public cash program; keep click tracking (`docs/bandcamp_affiliate.md`)
+- Vercel split deploy: decided no for launch, keep single Railway deploy (`docs/vercel_decision.md`)

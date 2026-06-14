@@ -321,6 +321,34 @@ Still missing:
 4. Start feedback-first promotion using `craterra_promotion_plan.md`
 5. Decide whether Vercel split deploy is needed after first demo
 
+## 2026-06-14 Session — Next-Steps Pass
+
+Worked through the recommended next steps autonomously. Status:
+
+1. **Mobile layout (code) — done.** Simplified the mobile `.workspace` rule:
+   removed the `max-width: min(100%, 342px)` cap and left-pin (`margin: 0`),
+   now full-width and centered (`max-width: 100%; margin: 0 auto`). The old cap
+   was a pre-guards band-aid; existing `min-width:0` / `overflow-wrap:anywhere`
+   / single-column / `overflow-x: clip` guards make full width safe. All 14
+   pytest tests still pass. **Real-phone eyeball still pending** (cannot drive a
+   physical device from here).
+2. **`outbound_clicks` Supabase schema — prepared, blocked on dashboard.**
+   Probed production: only `outbound_clicks` is missing (404); `feedback`,
+   `dig_history`, `dig_patterns`, `session_profile` exist. PostgREST cannot run
+   DDL, and no DB password / management token / psql is available locally, so it
+   cannot be applied via API. Reduced to a single paste:
+   `docs/outbound_clicks_schema.sql`. Clicks keep using local JSONL until run.
+3. **Bandcamp affiliate — confirmed no official public cash program** (re-checked
+   2026-06-14). Keep click tracking; documented in `docs/bandcamp_affiliate.md`.
+   Apple Music affiliate token is the realistic first channel.
+4. **Promotion — launch-ready pack written**, `docs/launch_ready.md` (HN / Reddit
+   / Korean / Product Hunt copy + status-checked pre-flight). Posting left manual
+   (needs your accounts; public posting as you is a reputation action).
+5. **Vercel split deploy — decided NO for launch**, `docs/vercel_decision.md`.
+   Keep single Railway deploy; documented revisit triggers.
+
+Production smoke re-verified 2026-06-14: `/health`, `/`, `/validate` all 200.
+
 ## Important Notes
 
 Last.fm:
