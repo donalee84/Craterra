@@ -19,7 +19,12 @@ from backend.app.schemas import (
 )
 from backend.app.clients.musicbrainz import _relationship_summary
 from backend.app.services.local_store import build_dig_history_record
-from backend.app.services.dig import _artist_matches_root, _normalize_key, _prepare_curation_candidates
+from backend.app.services.dig import (
+    _artist_matches_root,
+    _normalize_key,
+    _prepare_curation_candidates,
+    _text_close,
+)
 
 
 client = TestClient(app)
@@ -292,6 +297,16 @@ def test_in_memory_rate_limiter_evicts_idle_clients():
 
     limiter.allow("three:/dig", limit=5)
     assert set(limiter._requests) == {"three:/dig"}
+
+
+def test_text_close_accepts_real_matches_and_rejects_loose_hits():
+    # Accent/suffix/feat variations should still count as the same track.
+    assert _text_close("L’indécis", "L'indecis")
+    assert _text_close("The Less I Know the Better", "The Less I Know the Better - Remastered")
+    assert _text_close("Tame Impala", "Tame Impala feat. Someone")
+    # Loose keyword hits from validation search must be rejected.
+    assert not _text_close("Zxqwv Nonexistent Track", "Keep The Fate")
+    assert not _text_close("asdkjfh qweuriou", "Montechiari Project")
 
 
 def test_artist_matches_root_handles_collabs_and_accents():

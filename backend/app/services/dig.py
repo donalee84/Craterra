@@ -101,6 +101,13 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
     for pick in picks:
         candidate = curation_candidates[pick.candidate_index]
         validation_response = await validate_track(f"{candidate.artist} {candidate.title}")
+        result = validation_response.result
+        if result is None or not _validation_matches(candidate, result):
+            # Drop picks we cannot confirm as the same track on
+            # Deezer/MusicBrainz/iTunes. Those sources return their top search
+            # hit even for loose keyword matches, so an unverifiable pick would
+            # otherwise show up as a hallucination-looking, unfindable track.
+            continue
         recommendations.append(
             RecommendationCard(
                 title=candidate.title,
@@ -266,6 +273,28 @@ _COLLAB_SPLIT_RE = re.compile(r"\s*(?:,|&|feat\.?|ft\.?|/|\bx\b|\bwith\b|\bvs\.?
 
 def _is_filler_track(title: str | None) -> bool:
     return bool(title and _FILLER_TITLE_RE.search(title))
+
+
+def _validation_matches(candidate: CandidateTrack, result) -> bool:
+    """True when a validation hit is plausibly the same track as the candidate.
+
+    The validation sources return their top search result even for loose
+    keyword matches, so confirm both the artist and title actually line up.
+    """
+    return _text_close(candidate.artist, result.artist) and _text_close(candidate.title, result.title)
+
+
+def _text_close(a: str | None, b: str | None) -> bool:
+    ka, kb = _normalize_key(a), _normalize_key(b)
+    if not ka or not kb:
+        return False
+    if ka == kb or ka in kb or kb in ka:
+        return True
+    tokens_a, tokens_b = set(ka.split()), set(kb.split())
+    if not tokens_a or not tokens_b:
+        return False
+    overlap = len(tokens_a & tokens_b) / min(len(tokens_a), len(tokens_b))
+    return overlap >= 0.6
 
 
 def _artist_matches_root(artist: str | None, root_artist_key: str) -> bool:
