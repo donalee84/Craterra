@@ -77,11 +77,17 @@ async def get_similar_artist_tracks(
     if not similar:
         return []
 
+    # Bound concurrency so this fan-out does not trip Last.fm's per-key rate
+    # limit (which would silently empty the pool, especially for niche seeds
+    # where this is the only source with data).
+    semaphore = asyncio.Semaphore(3)
+
+    async def _bounded(name: str) -> list[CandidateTrack]:
+        async with semaphore:
+            return await _artist_get_top_tracks(name, settings.lastfm_api_key, limit=per_artist)
+
     results = await asyncio.gather(
-        *[
-            _artist_get_top_tracks(name, settings.lastfm_api_key, limit=per_artist)
-            for name in similar
-        ],
+        *[_bounded(name) for name in similar],
         return_exceptions=True,
     )
 
