@@ -1,4 +1,4 @@
-from backend.app.clients.deezer import search_deezer, search_deezer_candidates
+from backend.app.clients.deezer import search_deezer_candidates
 from backend.app.clients.itunes import search_itunes
 from backend.app.clients.musicbrainz import search_musicbrainz
 from backend.app.clients.youtube import search_youtube_music
@@ -11,28 +11,25 @@ async def validate_track(
     *,
     match_artist: str | None = None,
     match_title: str | None = None,
-    require_youtube: bool = False,
+    youtube_fallback: bool = False,
 ) -> ValidateResponse:
-    """Validate a track across Deezer -> MusicBrainz -> iTunes.
+    """Validate a track across Deezer -> MusicBrainz -> iTunes (-> YouTube).
 
     When match_artist/match_title are given, sources return the result that
-    actually matches the target instead of their top search hit, so a real
-    track is not rejected just because the engine ranked a cover/remix first.
+    actually matches the target instead of their top search hit.
 
-    When require_youtube=True (Track 2 / AI-generated suggestions), the result
-    must also be confirmed on YouTube to filter hallucinations. Each YouTube
-    call costs 100 units so this flag should only be set for AI-generated picks.
+    When youtube_fallback=True (Track 2), YouTube is used as a final source
+    if Deezer/MusicBrainz/iTunes all fail to confirm the track. This allows
+    niche or regional songs not well-indexed on Deezer to still pass through
+    as long as they exist on YouTube.
     """
     checked_sources: list[ValidationSource] = []
-    result = await _find_track(query, match_artist, match_title, checked_sources)
+    result = await _find_track(
+        query, match_artist, match_title, checked_sources, youtube_fallback
+    )
 
     if result is None:
         return ValidateResponse(query=query, found=False, checked_sources=checked_sources)
-
-    if require_youtube and match_artist and match_title:
-        checked_sources.append("youtube")
-        if not await search_youtube_music(match_artist, match_title):
-            return ValidateResponse(query=query, found=False, checked_sources=checked_sources)
 
     return ValidateResponse(
         query=query,
@@ -47,6 +44,7 @@ async def _find_track(
     match_artist: str | None,
     match_title: str | None,
     checked_sources: list[ValidationSource],
+    youtube_fallback: bool = False,
 ) -> TrackValidationResult | None:
     checked_sources.append("deezer")
     deezer_match = _best_match(
@@ -65,6 +63,18 @@ async def _find_track(
         result = await search(query)
         if result is not None and _accepts(result, match_artist, match_title):
             return result
+
+    # YouTube as final fallback for Track 2: confirms the song exists even
+    # when major catalogs don't index it well (e.g. Korean indie/rock).
+    if youtube_fallback and match_artist and match_title:
+        checked_sources.append("youtube")
+        if await search_youtube_music(match_artist, match_title):
+            return TrackValidationResult(
+                source="youtube",
+                title=match_title,
+                artist=match_artist,
+                confidence=0.6,
+            )
 
     return None
 

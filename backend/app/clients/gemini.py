@@ -33,7 +33,14 @@ async def analyze_audio_preview(preview_url: str) -> str | None:
             audio_response = await client.get(str(preview_url), timeout=15.0)
             audio_response.raise_for_status()
             audio_b64 = base64.b64encode(audio_response.content).decode()
-            mime_type = audio_response.headers.get("content-type", "audio/mpeg").split(";")[0]
+            raw_mime = audio_response.headers.get("content-type", "audio/mpeg").split(";")[0].strip()
+            # Normalize non-standard MIME types to ones Gemini accepts.
+            mime_type = {
+                "audio/x-m4a": "audio/mp4",
+                "audio/m4a": "audio/mp4",
+                "audio/x-aac": "audio/aac",
+                "audio/x-mpeg": "audio/mpeg",
+            }.get(raw_mime, raw_mime)
     except httpx.HTTPError:
         return None
 

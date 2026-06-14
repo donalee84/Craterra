@@ -202,7 +202,7 @@ async def _build_track2_response(
             f"{suggestion.artist} {suggestion.title}",
             match_artist=suggestion.artist,
             match_title=suggestion.title,
-            require_youtube=True,
+            youtube_fallback=True,
         )
         if validation_response.result is None:
             continue
