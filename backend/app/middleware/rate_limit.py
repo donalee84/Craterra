@@ -21,10 +21,12 @@ class InMemoryRateLimiter:
         self.window_seconds = window_seconds
         self._requests: dict[str, deque[float]] = defaultdict(deque)
         self._lock = Lock()
+        self._last_sweep = monotonic()
 
     def allow(self, key: str, limit: int) -> tuple[bool, int]:
         now = monotonic()
         with self._lock:
+            self._sweep_stale(now)
             bucket = self._requests[key]
             while bucket and now - bucket[0] >= self.window_seconds:
                 bucket.popleft()
@@ -35,6 +37,20 @@ class InMemoryRateLimiter:
 
             bucket.append(now)
             return True, 0
+
+    def _sweep_stale(self, now: float) -> None:
+        # Drop buckets for clients idle longer than the window so the map stays
+        # bounded to active clients instead of growing once per unique IP.
+        if now - self._last_sweep < self.window_seconds:
+            return
+        self._last_sweep = now
+        stale = [
+            key
+            for key, bucket in self._requests.items()
+            if not bucket or now - bucket[-1] >= self.window_seconds
+        ]
+        for key in stale:
+            del self._requests[key]
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

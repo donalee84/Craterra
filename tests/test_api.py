@@ -273,6 +273,27 @@ def test_in_memory_rate_limiter_blocks_after_limit():
     assert retry_after > 0
 
 
+def test_in_memory_rate_limiter_evicts_idle_clients():
+    from time import monotonic
+
+    limiter = InMemoryRateLimiter(window_seconds=60)
+
+    limiter.allow("one:/dig", limit=5)
+    limiter.allow("two:/dig", limit=5)
+    assert len(limiter._requests) == 2
+
+    # Make both clients look idle beyond the window and force the next call
+    # past the sweep interval; idle buckets should be evicted so the map stays
+    # bounded to the active client instead of growing once per unique IP.
+    stale_time = monotonic() - 61
+    limiter._requests["one:/dig"][0] = stale_time
+    limiter._requests["two:/dig"][0] = stale_time
+    limiter._last_sweep = stale_time
+
+    limiter.allow("three:/dig", limit=5)
+    assert set(limiter._requests) == {"three:/dig"}
+
+
 def test_prepare_curation_candidates_filters_seed_and_root_artist_for_digging():
     candidates = [
         CandidateTrack(title="Creep", artist="Radiohead", source="test", rarity_score=0.1),
