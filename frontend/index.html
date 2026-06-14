@@ -89,13 +89,21 @@
           <button class="primary" type="submit">Dig</button>
         </form>
 
-        <p class="form-hint">
-          Add the <strong>artist</strong> for accurate results — common titles like
-          &ldquo;Creep&rdquo; or &ldquo;Stay&rdquo; otherwise match the most popular
-          song, not the one you mean. <strong>Region</strong>, <strong>era</strong>,
-          <strong>mood</strong>, and the <strong>jump</strong> slider are optional:
-          they shape how far each pick strays from your seed.
-        </p>
+        <div class="form-hint">
+          <p>
+            Add the <strong>artist</strong> for accurate results — common titles like
+            &ldquo;Creep&rdquo; or &ldquo;Stay&rdquo; otherwise match the most popular
+            song, not the one you mean.
+          </p>
+          <p>Everything else is optional and shapes the dig:</p>
+          <ul class="hint-list">
+            <li><strong>Region</strong> — lean toward a music scene (e.g. JP Japanese, BR Brazilian, KR Korean, EU European)</li>
+            <li><strong>Era</strong> — favor a decade (e.g. 1990s, 2020s)</li>
+            <li><strong>Mood</strong> — vibe keywords (e.g. melancholy, late night)</li>
+            <li><strong>Jump</strong> — how far each pick strays: 1 stays close, 5 goes adventurous</li>
+            <li><strong>Challenge</strong> — push against your taste instead of matching it</li>
+          </ul>
+        </div>
 
         <section class="chain" id="dig-chain" aria-label="Dig chain" hidden>
           <div class="chain-header">

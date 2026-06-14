@@ -104,9 +104,20 @@ h1 {
   line-height: 1.6;
 }
 
+.form-hint p {
+  margin: 0 0 6px;
+}
+
 .form-hint strong {
   color: var(--text);
   font-weight: 600;
+}
+
+.hint-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
 }
 
 .field span {
