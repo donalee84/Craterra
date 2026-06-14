@@ -100,12 +100,15 @@ async def _request_curation(
     except (KeyError, IndexError, TypeError) as exc:
         raise OpenRouterCurationError("Unexpected OpenRouter response shape.") from exc
 
+    if not content:
+        raise OpenRouterCurationError("Model returned empty content.")
+
     try:
         payload = CurationPayload.model_validate_json(content)
     except ValidationError:
         try:
             payload = CurationPayload.model_validate(json.loads(content))
-        except (json.JSONDecodeError, ValidationError) as exc:
+        except (json.JSONDecodeError, ValidationError, TypeError) as exc:
             raise OpenRouterCurationError("Model did not return valid curation JSON.") from exc
 
     valid_indexes = set(range(len(candidates)))

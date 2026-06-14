@@ -19,7 +19,7 @@ from backend.app.schemas import (
 )
 from backend.app.clients.musicbrainz import _relationship_summary
 from backend.app.services.local_store import build_dig_history_record
-from backend.app.services.dig import _prepare_curation_candidates
+from backend.app.services.dig import _artist_matches_root, _normalize_key, _prepare_curation_candidates
 
 
 client = TestClient(app)
@@ -292,6 +292,17 @@ def test_in_memory_rate_limiter_evicts_idle_clients():
 
     limiter.allow("three:/dig", limit=5)
     assert set(limiter._requests) == {"three:/dig"}
+
+
+def test_artist_matches_root_handles_collabs_and_accents():
+    # Deezer "L'indecis" (straight quote, no accent) must match Last.fm
+    # "L'indécis" (curly quote, accent) and collaborations including it.
+    root = _normalize_key("L'indecis")
+    assert _artist_matches_root("L’indécis", root)
+    assert _artist_matches_root("Ghostnaut & L’indécis", root)
+    assert _artist_matches_root("Pandrezz, j'san & L’indécis feat. Epektase", root)
+    assert not _artist_matches_root("Kreatev", root)
+    assert not _artist_matches_root("El Train", root)
 
 
 def test_prepare_curation_candidates_drops_filler_tracks():

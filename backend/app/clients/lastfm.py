@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 import httpx
@@ -56,6 +57,110 @@ async def get_candidate_tracks(
         return similar_tracks
 
     return _normalize_search_results(search_results, limit=limit)
+
+
+async def get_similar_artist_tracks(
+    artist: str | None,
+    limit: int = 12,
+    per_artist: int = 2,
+) -> list[CandidateTrack]:
+    """Top tracks from artists Last.fm considers similar to the seed artist.
+
+    Broadens the pool with *other* artists so niche seeds are not dominated by
+    the seed artist's own catalog.
+    """
+    settings = get_settings()
+    if not settings.lastfm_api_key or not artist:
+        return []
+
+    similar = await _artist_get_similar(artist, settings.lastfm_api_key, limit=8)
+    if not similar:
+        return []
+
+    results = await asyncio.gather(
+        *[
+            _artist_get_top_tracks(name, settings.lastfm_api_key, limit=per_artist)
+            for name in similar
+        ],
+        return_exceptions=True,
+    )
+
+    candidates: list[CandidateTrack] = []
+    for result in results:
+        if isinstance(result, list):
+            candidates.extend(result)
+    return candidates[:limit]
+
+
+async def _artist_get_similar(artist: str, api_key: str, limit: int) -> list[str]:
+    try:
+        async with api_client() as client:
+            response = await request_with_retries(
+                client,
+                "GET",
+                LASTFM_API_URL,
+                service="lastfm",
+                params={
+                    "method": "artist.getSimilar",
+                    "artist": artist,
+                    "api_key": api_key,
+                    "format": "json",
+                    "limit": limit,
+                    "autocorrect": 1,
+                },
+            )
+            _raise_for_lastfm_error(response)
+    except (httpx.HTTPError, LastFmApiError):
+        return []
+
+    artists = response.json().get("similarartists", {}).get("artist", [])
+    if isinstance(artists, dict):
+        artists = [artists]
+    return [artist.get("name") for artist in artists if artist.get("name")][:limit]
+
+
+async def _artist_get_top_tracks(artist: str, api_key: str, limit: int) -> list[CandidateTrack]:
+    try:
+        async with api_client() as client:
+            response = await request_with_retries(
+                client,
+                "GET",
+                LASTFM_API_URL,
+                service="lastfm",
+                params={
+                    "method": "artist.getTopTracks",
+                    "artist": artist,
+                    "api_key": api_key,
+                    "format": "json",
+                    "limit": limit,
+                    "autocorrect": 1,
+                },
+            )
+            _raise_for_lastfm_error(response)
+    except (httpx.HTTPError, LastFmApiError):
+        return []
+
+    tracks = response.json().get("toptracks", {}).get("track", [])
+    if isinstance(tracks, dict):
+        tracks = [tracks]
+    return [_normalize_artist_top_track(track) for track in tracks[:limit]]
+
+
+def _normalize_artist_top_track(track: dict[str, Any]) -> CandidateTrack:
+    artist = track.get("artist") or {}
+    playcount = _safe_int(track.get("playcount"))
+    listeners = _safe_int(track.get("listeners"))
+    rarity_score = _rarity_score(playcount=playcount, listeners=listeners)
+    return CandidateTrack(
+        title=track.get("name") or "Unknown title",
+        artist=artist.get("name") or "Unknown artist",
+        source="lastfm:artist.topTracks",
+        playcount=playcount,
+        listeners=listeners,
+        rarity_score=rarity_score,
+        rarity_label=_rarity_label(rarity_score),
+        external_url=track.get("url") or None,
+    )
 
 
 async def _track_search(query: str, api_key: str, limit: int) -> list[dict[str, Any]]:

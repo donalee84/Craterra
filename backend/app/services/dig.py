@@ -1,5 +1,6 @@
 import logging
 import re
+import unicodedata
 
 from fastapi import HTTPException, status
 
@@ -7,6 +8,7 @@ from backend.app.clients.lastfm import (
     LastFmApiError,
     LastFmNotConfiguredError,
     get_candidate_tracks,
+    get_similar_artist_tracks,
 )
 from backend.app.clients.listenbrainz import get_artist_top_recordings
 from backend.app.clients.openrouter import (
@@ -46,7 +48,16 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
         root_validation.artist if root_validation else None,
         limit=10,
     )
-    candidates = _merge_candidates(candidates, listenbrainz_candidates, limit=35)
+    similar_artist_candidates = await get_similar_artist_tracks(
+        root_validation.artist if root_validation else None,
+        limit=14,
+    )
+    candidates = _merge_candidates(
+        candidates,
+        similar_artist_candidates,
+        listenbrainz_candidates,
+        limit=45,
+    )
 
     _apply_relative_rarity(candidates)
 
@@ -135,21 +146,21 @@ def _log_openrouter_usage(model_used, usage) -> None:
 
 
 def _merge_candidates(
-    primary: list[CandidateTrack],
-    secondary: list[CandidateTrack],
+    *sources: list[CandidateTrack],
     limit: int,
 ) -> list[CandidateTrack]:
     merged: list[CandidateTrack] = []
     seen: set[tuple[str, str]] = set()
 
-    for candidate in [*primary, *secondary]:
-        key = (candidate.artist.casefold().strip(), candidate.title.casefold().strip())
-        if key in seen:
-            continue
-        seen.add(key)
-        merged.append(candidate)
-        if len(merged) >= limit:
-            break
+    for source in sources:
+        for candidate in source:
+            key = (candidate.artist.casefold().strip(), candidate.title.casefold().strip())
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(candidate)
+            if len(merged) >= limit:
+                return merged
 
     return merged
 
@@ -184,9 +195,9 @@ def _prepare_curation_candidates(
         other_artists = [
             candidate
             for candidate in without_seed
-            if _normalize_key(candidate.artist) != root_artist_key
+            if not _artist_matches_root(candidate.artist, root_artist_key)
         ]
-        if len(other_artists) >= min(8, limit):
+        if len(other_artists) >= min(6, limit):
             without_seed = other_artists
 
     if distance_level >= 4:
@@ -250,11 +261,27 @@ def _relative_rarity_label(score: float) -> str:
 
 
 _FILLER_TITLE_RE = re.compile(r"\b(interlude|intro|outro|skit|skits)\b", re.IGNORECASE)
+_COLLAB_SPLIT_RE = re.compile(r"\s*(?:,|&|feat\.?|ft\.?|/|\bx\b|\bwith\b|\bvs\.?)\s*", re.IGNORECASE)
 
 
 def _is_filler_track(title: str | None) -> bool:
     return bool(title and _FILLER_TITLE_RE.search(title))
 
 
+def _artist_matches_root(artist: str | None, root_artist_key: str) -> bool:
+    """True when the candidate is by, or a collaboration including, the seed artist."""
+    if not root_artist_key:
+        return False
+    if _normalize_key(artist) == root_artist_key:
+        return True
+    return root_artist_key in {_normalize_key(part) for part in _COLLAB_SPLIT_RE.split(artist or "")}
+
+
 def _normalize_key(value: str | None) -> str:
-    return " ".join((value or "").casefold().strip().split())
+    # Unify apostrophe variants and strip accents so the same artist from
+    # different sources compares equal, e.g. Deezer "L'indecis" vs Last.fm
+    # "L’indécis".
+    text = (value or "").replace("’", "'").replace("‘", "'").replace("`", "'")
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return " ".join(text.casefold().strip().split())
