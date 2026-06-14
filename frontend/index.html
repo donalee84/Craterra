@@ -18,6 +18,17 @@
         </header>
 
         <form class="dig-form" id="dig-form">
+          <label class="field">
+            <span>Artist</span>
+            <input
+              id="artist"
+              name="artist"
+              type="text"
+              autocomplete="off"
+              placeholder="Radiohead"
+            />
+          </label>
+
           <label class="field field-main">
             <span>Song</span>
             <input
@@ -25,7 +36,7 @@
               name="query"
               type="search"
               autocomplete="off"
-              placeholder="Radiohead Creep"
+              placeholder="Creep"
               required
               minlength="2"
             />
@@ -77,6 +88,14 @@
 
           <button class="primary" type="submit">Dig</button>
         </form>
+
+        <p class="form-hint">
+          Add the <strong>artist</strong> for accurate results — common titles like
+          &ldquo;Creep&rdquo; or &ldquo;Stay&rdquo; otherwise match the most popular
+          song, not the one you mean. <strong>Region</strong>, <strong>era</strong>,
+          <strong>mood</strong>, and the <strong>jump</strong> slider are optional:
+          they shape how far each pick strays from your seed.
+        </p>
 
         <section class="chain" id="dig-chain" aria-label="Dig chain" hidden>
           <div class="chain-header">

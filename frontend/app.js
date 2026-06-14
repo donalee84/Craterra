@@ -1,5 +1,6 @@
 const form = document.querySelector("#dig-form");
 const queryInput = document.querySelector("#query");
+const artistInput = document.querySelector("#artist");
 const distanceInput = document.querySelector("#distance");
 const distanceOutput = document.querySelector("#distance-output");
 const moodInput = document.querySelector("#mood");
@@ -33,10 +34,12 @@ chainClear.addEventListener("click", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const query = queryInput.value.trim();
-  if (!query) return;
+  const song = queryInput.value.trim();
+  if (!song) return;
+  const artist = artistInput.value.trim();
+  const query = [artist, song].filter(Boolean).join(" ");
 
-  const proposedChain = pendingChain || [makeChainItem({ query })];
+  const proposedChain = pendingChain || [makeChainItem({ query, artist, title: song })];
   pendingChain = null;
   setStatus("Digging");
   results.innerHTML = `<div class="empty"><h2>Digging...</h2><p>Building candidates and asking the curator.</p></div>`;
@@ -137,7 +140,8 @@ function renderRecommendations(recommendations) {
       shareRecommendation(recommendation);
     });
     card.querySelector(".continue").addEventListener("click", () => {
-      queryInput.value = `${recommendation.artist} ${recommendation.title}`;
+      artistInput.value = recommendation.artist || "";
+      queryInput.value = recommendation.title || "";
       pendingChain = appendChainItem(digChain, makeChainItem(recommendation));
       form.requestSubmit();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -213,7 +217,8 @@ function renderDigChain() {
     button.type = "button";
     button.textContent = item.label;
     button.addEventListener("click", () => {
-      queryInput.value = item.query;
+      artistInput.value = item.artist || "";
+      queryInput.value = item.title || item.query;
       pendingChain = digChain.slice(0, index + 1);
       form.requestSubmit();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -237,6 +242,8 @@ function makeChainItem(source) {
   return {
     query,
     label,
+    artist: source.artist || "",
+    title: source.title || "",
   };
 }
 

@@ -83,8 +83,8 @@ h1 {
 .dig-form {
   display: grid;
   grid-template-columns:
-    minmax(220px, 1.4fr) minmax(120px, 0.55fr) minmax(120px, 0.55fr)
-    minmax(150px, 0.7fr) minmax(180px, 1fr) auto auto;
+    minmax(140px, 0.9fr) minmax(160px, 1.1fr) minmax(110px, 0.5fr) minmax(110px, 0.5fr)
+    minmax(140px, 0.65fr) minmax(150px, 0.85fr) auto auto;
   gap: 12px;
   align-items: end;
   padding: 16px;
@@ -96,6 +96,19 @@ h1 {
   display: grid;
   gap: 8px;
   min-width: 0;
+}
+
+.form-hint {
+  margin: 12px 2px 0;
+  max-width: 74ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.form-hint strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .field span {
