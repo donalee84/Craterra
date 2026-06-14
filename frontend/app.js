@@ -5,7 +5,6 @@ const distanceInput = document.querySelector("#distance");
 const distanceOutput = document.querySelector("#distance-output");
 const moodInput = document.querySelector("#mood");
 const regionInput = document.querySelector("#region");
-const eraInput = document.querySelector("#era");
 const challengeInput = document.querySelector("#challenge");
 const results = document.querySelector("#results");
 const statusEl = document.querySelector("#status");
@@ -53,7 +52,6 @@ form.addEventListener("submit", async (event) => {
       query,
       distance_level: Number(distanceInput.value),
       region: blankToNull(regionInput.value),
-      era: blankToNull(eraInput.value),
       challenge_mode: challengeInput.checked,
       mood_tags: moodInput.value
         .split(",")

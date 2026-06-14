@@ -169,7 +169,6 @@ def _build_payload(
         "query": request.query,
         "distance_level": request.distance_level,
         "region": request.region,
-        "era": request.era,
         "challenge_mode": request.challenge_mode,
         "mood_tags": request.mood_tags,
         "normalized_root": {
@@ -269,8 +268,6 @@ def _curation_guidance(request: DigRequest) -> str:
         )
     if request.region:
         notes.append(f"Use the region preference when candidates allow it: {request.region}.")
-    if request.era:
-        notes.append(f"Use the era preference when candidates allow it: {request.era}.")
     if request.mood_tags:
         notes.append(f"Respect these mood tags: {', '.join(request.mood_tags)}.")
 

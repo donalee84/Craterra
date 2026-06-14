@@ -119,7 +119,6 @@ def build_dig_history_record(
         "params": {
             "distance_level": request.distance_level,
             "region": request.region,
-            "era": request.era,
             "challenge_mode": request.challenge_mode,
             "mood_tags": request.mood_tags,
         },
