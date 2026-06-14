@@ -299,6 +299,23 @@ def test_in_memory_rate_limiter_evicts_idle_clients():
     assert set(limiter._requests) == {"three:/dig"}
 
 
+def test_validation_best_match_prefers_matching_result():
+    from backend.app.schemas import TrackValidationResult
+    from backend.app.services.validation import _best_match
+
+    def r(artist, title):
+        return TrackValidationResult(source="deezer", title=title, artist=artist, confidence=0.92)
+
+    results = [r("Turtlecommercial", "NEWJEANS"), r("aespa", "Supernova")]
+    # Picks the real track even though a garbage hit ranks first.
+    chosen = _best_match(results, "aespa", "Supernova")
+    assert chosen is not None and chosen.artist == "aespa" and chosen.title == "Supernova"
+    # No genuine match -> None (so the pick is dropped).
+    assert _best_match([r("Wrong", "Thing")], "aespa", "Supernova") is None
+    # No match targets (free-text validate) -> top hit.
+    assert _best_match(results, None, None).artist == "Turtlecommercial"
+
+
 def test_text_close_accepts_real_matches_and_rejects_loose_hits():
     # Accent/suffix/feat variations should still count as the same track.
     assert _text_close("L’indécis", "L'indecis")
