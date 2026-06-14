@@ -33,6 +33,7 @@ class ValidateResponse(BaseModel):
 
 class DigRequest(BaseModel):
     query: str = Field(min_length=2, max_length=200)
+    artist: str | None = Field(default=None, max_length=200)
     distance_level: int = Field(default=3, ge=1, le=5)
     region: str | None = Field(default=None, max_length=20)
     challenge_mode: bool = False

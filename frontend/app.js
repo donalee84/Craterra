@@ -49,7 +49,8 @@ form.addEventListener("submit", async (event) => {
 
   try {
     const payload = {
-      query,
+      query: song,
+      artist: artist || null,
       distance_level: Number(distanceInput.value),
       region: blankToNull(regionInput.value),
       challenge_mode: challengeInput.checked,

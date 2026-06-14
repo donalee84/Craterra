@@ -16,7 +16,7 @@ from backend.app.clients.openrouter import (
     OpenRouterNotConfiguredError,
     curate_candidates,
 )
-from backend.app.clients.deezer import search_deezer
+from backend.app.clients.deezer import resolve_artist_name, search_deezer
 from backend.app.schemas import CandidateTrack, DigRequest, DigResponse, RecommendationCard
 from backend.app.services.outbound_links import build_outbound_links
 from backend.app.services.persistence import get_session_profile, save_dig_history
@@ -24,14 +24,26 @@ from backend.app.services.validation import validate_track
 
 
 async def build_dig_response(request: DigRequest) -> DigResponse:
-    root_validation = await search_deezer(request.query)
+    if request.artist:
+        # Trust the explicit artist/song fields. Resolve the artist to Deezer's
+        # canonical (romanized) name so Last.fm, which indexes by romanized
+        # name, can find similar tracks (e.g. "아이유" -> "IU").
+        seed_artist = await resolve_artist_name(request.artist) or request.artist
+        seed_title = request.query
+        seed_query = f"{seed_artist} {seed_title}"
+    else:
+        # Legacy free-text query: let Deezer normalize the whole string.
+        root_validation = await search_deezer(request.query)
+        seed_artist = root_validation.artist if root_validation else None
+        seed_title = root_validation.title if root_validation else None
+        seed_query = request.query
 
     try:
         candidates = await get_candidate_tracks(
-            request.query,
+            seed_query,
             limit=25,
-            root_title=root_validation.title if root_validation else None,
-            root_artist=root_validation.artist if root_validation else None,
+            root_title=seed_title,
+            root_artist=seed_artist,
         )
     except LastFmNotConfiguredError as exc:
         raise HTTPException(
@@ -45,11 +57,11 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
         ) from exc
 
     listenbrainz_candidates = await get_artist_top_recordings(
-        root_validation.artist if root_validation else None,
+        seed_artist,
         limit=10,
     )
     similar_artist_candidates = await get_similar_artist_tracks(
-        root_validation.artist if root_validation else None,
+        seed_artist,
         limit=14,
     )
     candidates = _merge_candidates(
@@ -72,8 +84,8 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
     session_profile = await get_session_profile(request.session_id)
     curation_candidates = _prepare_curation_candidates(
         candidates,
-        root_title=root_validation.title if root_validation else None,
-        root_artist=root_validation.artist if root_validation else None,
+        root_title=seed_title,
+        root_artist=seed_artist,
         distance_level=request.distance_level,
         limit=18,
     )
@@ -83,8 +95,8 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
             request,
             curation_candidates,
             session_profile=session_profile,
-            root_title=root_validation.title if root_validation else None,
-            root_artist=root_validation.artist if root_validation else None,
+            root_title=seed_title,
+            root_artist=seed_artist,
         )
     except OpenRouterNotConfiguredError as exc:
         raise HTTPException(
