@@ -1,14 +1,14 @@
 :root {
-  color-scheme: dark;
-  --bg: #111317;
-  --panel: #191c21;
-  --panel-2: #20242b;
-  --text: #f2f0ea;
-  --muted: #a9b0b8;
-  --line: #343a43;
-  --accent: #c5f56a;
-  --accent-2: #6ed4ff;
-  --danger: #ff8b8b;
+  color-scheme: light;
+  --bg: #f3efe6;
+  --panel: #faf7f0;
+  --panel-2: #ece6d8;
+  --text: #221e18;
+  --muted: #6b6357;
+  --line: #d8cfbe;
+  --accent: #c8521f;
+  --accent-2: #2f7d7a;
+  --danger: #b23a3a;
 }
 
 * {
@@ -108,7 +108,7 @@ h1 {
   border-radius: 6px;
   padding: 0 12px;
   color: var(--muted);
-  background: #0e1013;
+  background: #fffdf8;
   min-width: 0;
 }
 
@@ -125,7 +125,7 @@ input[type="text"] {
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #0e1013;
+  background: #fffdf8;
   color: var(--text);
   padding: 0 12px;
   outline: none;
@@ -179,7 +179,7 @@ output {
 .chain {
   margin-top: 14px;
   border: 1px solid var(--line);
-  background: #0e1013;
+  background: #fffdf8;
   padding: 12px;
 }
 
@@ -278,7 +278,7 @@ output {
   background-repeat: no-repeat;
   background-position: center;
   background-size: 44px 44px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" fill="none" stroke="%23343a43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="32" r="5"/><circle cx="34" cy="27" r="5"/><path d="M21 32V13l18-4v18"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" fill="none" stroke="%23c2b8a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="32" r="5"/><circle cx="34" cy="27" r="5"/><path d="M21 32V13l18-4v18"/></svg>');
 }
 
 .track-body {
@@ -368,11 +368,11 @@ output {
   border-radius: 6px;
   cursor: pointer;
   background: transparent no-repeat center / 13px 13px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 14 14" fill="%23c5f56a"><path d="M3 2l9 5-9 5z"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 14 14" fill="%23c8521f"><path d="M3 2l9 5-9 5z"/></svg>');
 }
 
 .player.is-playing .player-toggle {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 14 14" fill="%23c5f56a"><rect x="3" y="2" width="3" height="10"/><rect x="8" y="2" width="3" height="10"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 14 14" fill="%23c8521f"><rect x="3" y="2" width="3" height="10"/><rect x="8" y="2" width="3" height="10"/></svg>');
 }
 
 .player-track {
@@ -521,4 +521,36 @@ output {
     height: auto;
     aspect-ratio: 1;
   }
+}
+
+/* Warm-minimal theme: crumpled paper, serif headline, softened panels. */
+body {
+  background-color: #f1ece1;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="700" height="700"><filter id="p" x="0" y="0" width="100%25" height="100%25"><feTurbulence type="fractalNoise" baseFrequency="0.022 0.028" numOctaves="5" seed="7" stitchTiles="stitch" result="n"/><feDiffuseLighting in="n" lighting-color="%23f1ece1" surfaceScale="1.6" diffuseConstant="1.05"><feDistantLight azimuth="235" elevation="58"/></feDiffuseLighting></filter><rect width="100%25" height="100%25" filter="url(%23p)"/></svg>');
+  background-size: 700px 700px;
+}
+
+h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.eyebrow {
+  letter-spacing: 0.1em;
+}
+
+.primary {
+  color: #fffdf8;
+}
+
+.track-card,
+.dig-form,
+.chain,
+.empty {
+  border-radius: 4px;
+}
+
+.empty {
+  background: transparent;
 }
