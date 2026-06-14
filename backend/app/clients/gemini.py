@@ -7,7 +7,7 @@ from backend.app.config import get_settings
 
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models"
-    "/gemini-1.5-flash:generateContent"
+    "/gemini-2.0-flash:generateContent"
 )
 
 _ANALYSIS_PROMPT = (
@@ -34,6 +34,9 @@ async def analyze_audio_preview(preview_url: str) -> str | None:
             audio_response.raise_for_status()
             audio_b64 = base64.b64encode(audio_response.content).decode()
             raw_mime = audio_response.headers.get("content-type", "audio/mpeg").split(";")[0].strip()
+            # M4P is DRM-protected Apple audio — Gemini cannot decode it.
+            if raw_mime in ("audio/x-m4p", "audio/m4p"):
+                return None
             # Normalize non-standard MIME types to ones Gemini accepts.
             mime_type = {
                 "audio/x-m4a": "audio/mp4",
