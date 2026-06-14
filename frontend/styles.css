@@ -82,9 +82,7 @@ h1 {
 
 .dig-form {
   display: grid;
-  grid-template-columns:
-    minmax(140px, 0.9fr) minmax(160px, 1.1fr) minmax(110px, 0.5fr) minmax(110px, 0.5fr)
-    minmax(140px, 0.65fr) minmax(150px, 0.85fr) auto auto;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
   align-items: end;
   padding: 16px;
