@@ -100,10 +100,13 @@ function renderRecommendations(recommendations) {
     );
 
     const artwork = card.querySelector(".artwork");
-    artwork.src = validation.artwork_url || "";
-    artwork.alt = validation.album
-      ? `${recommendation.title} album artwork`
-      : "";
+    artwork.addEventListener("error", () => showArtworkPlaceholder(artwork));
+    if (validation.artwork_url) {
+      artwork.src = validation.artwork_url;
+      artwork.alt = validation.album ? `${recommendation.title} album artwork` : "";
+    } else {
+      showArtworkPlaceholder(artwork);
+    }
 
     const preview = card.querySelector(".preview");
     if (validation.preview_url) {
@@ -140,6 +143,12 @@ function renderRecommendations(recommendations) {
 
     results.append(card);
   });
+}
+
+function showArtworkPlaceholder(artwork) {
+  artwork.removeAttribute("src");
+  artwork.alt = "";
+  artwork.classList.add("artwork-empty");
 }
 
 function renderDigChain() {

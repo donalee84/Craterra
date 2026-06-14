@@ -273,6 +273,14 @@ output {
   background: var(--panel-2);
 }
 
+.artwork-empty {
+  background-color: var(--panel-2);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 44px 44px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" fill="none" stroke="%23343a43" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="32" r="5"/><circle cx="34" cy="27" r="5"/><path d="M21 32V13l18-4v18"/></svg>');
+}
+
 .track-body {
   display: grid;
   gap: 12px;
