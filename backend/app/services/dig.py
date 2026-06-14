@@ -14,6 +14,7 @@ from backend.app.clients.openrouter import (
     OpenRouterCurationError,
     OpenRouterNotConfiguredError,
     curate_candidates,
+    generate_similar_tracks,
 )
 from backend.app.clients.deezer import resolve_artist_name, search_deezer
 from backend.app.schemas import CandidateTrack, DigRequest, DigResponse, RecommendationCard
@@ -81,6 +82,13 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
             next_step="No Last.fm or ListenBrainz candidates found for this query.",
         )
 
+    # Track 2: when direct song-similarity data is sparse (< 3 from track.getSimilar),
+    # fall back to AI generation + strict YouTube validation instead of curating
+    # a pool that is mostly era/artist-cluster guesses.
+    direct_similar_count = sum(1 for c in candidates if c.source == "lastfm:track.getSimilar")
+    if direct_similar_count < 3 and seed_title and seed_artist:
+        return await _build_track2_response(request, candidates, seed_title, seed_artist)
+
     session_profile = await get_session_profile(request.session_id)
     curation_candidates = _prepare_curation_candidates(
         candidates,
@@ -135,6 +143,70 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
                 validation=validation_response.result,
                 checked_sources=validation_response.checked_sources,
                 outbound_links=build_outbound_links(candidate.artist, candidate.title),
+            )
+        )
+
+    _log_openrouter_usage(model_used, usage)
+    await save_dig_history(request, recommendations, model_used, usage)
+
+    return DigResponse(
+        query=request.query,
+        candidates=candidates,
+        recommendations=recommendations,
+        model_used=model_used,
+        usage=usage,
+        next_step="Tune dig-pattern learning and share cards next.",
+    )
+
+
+async def _build_track2_response(
+    request: DigRequest,
+    candidates: list[CandidateTrack],
+    seed_title: str,
+    seed_artist: str,
+) -> DigResponse:
+    """Track 2 path: AI generates similar song suggestions and YouTube confirms each one."""
+    try:
+        suggestions, model_used, usage = await generate_similar_tracks(
+            seed_title=seed_title,
+            seed_artist=seed_artist,
+            distance_level=request.distance_level,
+            challenge_mode=request.challenge_mode,
+            mood_tags=request.mood_tags,
+        )
+    except OpenRouterNotConfiguredError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OPENROUTER_API_KEY is required before /dig can generate recommendations.",
+        ) from exc
+    except OpenRouterCurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"OpenRouter generation failed: {exc}",
+        ) from exc
+
+    recommendations: list[RecommendationCard] = []
+    for suggestion in suggestions:
+        validation_response = await validate_track(
+            f"{suggestion.artist} {suggestion.title}",
+            match_artist=suggestion.artist,
+            match_title=suggestion.title,
+            require_youtube=True,
+        )
+        if validation_response.result is None:
+            continue
+        recommendations.append(
+            RecommendationCard(
+                title=suggestion.title,
+                artist=suggestion.artist,
+                reason=suggestion.reason,
+                confidence=0.7,
+                rarity_score=None,
+                rarity_label=None,
+                candidate_source="ai:generated",
+                validation=validation_response.result,
+                checked_sources=validation_response.checked_sources,
+                outbound_links=build_outbound_links(suggestion.artist, suggestion.title),
             )
         )
 

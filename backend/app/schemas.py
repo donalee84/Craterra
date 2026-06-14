@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, HttpUrl
 
 
-ValidationSource = Literal["deezer", "musicbrainz", "itunes"]
+ValidationSource = Literal["deezer", "musicbrainz", "itunes", "youtube"]
 
 
 class HealthResponse(BaseModel):
@@ -84,6 +84,12 @@ class CandidateTrack(BaseModel):
     rarity_score: float | None = Field(default=None, ge=0.0, le=1.0)
     rarity_label: str | None = None
     external_url: HttpUrl | None = None
+
+
+class GeneratedSuggestion(BaseModel):
+    artist: str = Field(min_length=1, max_length=200)
+    title: str = Field(min_length=1, max_length=200)
+    reason: str = Field(min_length=8, max_length=500)
 
 
 class CuratedPick(BaseModel):

@@ -10,6 +10,7 @@ from backend.app.schemas import (
     CandidateTrack,
     CuratedPick,
     DigRequest,
+    GeneratedSuggestion,
     OpenRouterUsage,
     SessionTasteProfile,
 )
@@ -27,6 +28,10 @@ class OpenRouterCurationError(RuntimeError):
 
 class CurationPayload(BaseModel):
     picks: list[CuratedPick] = Field(min_length=1, max_length=5)
+
+
+class GenerationPayload(BaseModel):
+    suggestions: list[GeneratedSuggestion] = Field(min_length=1, max_length=6)
 
 
 async def curate_candidates(
@@ -249,6 +254,159 @@ def _build_payload(
             },
         ],
     }
+
+
+async def generate_similar_tracks(
+    seed_title: str,
+    seed_artist: str,
+    *,
+    distance_level: int = 3,
+    challenge_mode: bool = False,
+    mood_tags: list[str] | None = None,
+) -> tuple[list[GeneratedSuggestion], str, OpenRouterUsage | None]:
+    """Track 2 path: AI generates similar song suggestions when Last.fm has no data.
+
+    Unlike curation (which selects from a pool), this asks the model to produce
+    real song titles from memory. Results are validated + YouTube-confirmed in
+    dig.py before reaching the UI.
+    """
+    settings = get_settings()
+    if not settings.openrouter_api_key:
+        raise OpenRouterNotConfiguredError("OPENROUTER_API_KEY is not configured.")
+
+    errors: list[str] = []
+    for model in (settings.openrouter_model, settings.openrouter_fallback_model):
+        try:
+            suggestions, usage = await _request_generation(
+                api_key=settings.openrouter_api_key,
+                model=model,
+                seed_title=seed_title,
+                seed_artist=seed_artist,
+                distance_level=distance_level,
+                challenge_mode=challenge_mode,
+                mood_tags=mood_tags or [],
+            )
+            return suggestions, model, usage
+        except OpenRouterCurationError as exc:
+            errors.append(f"{model}: {exc}")
+
+    raise OpenRouterCurationError("; ".join(errors) or "No model returned valid suggestions.")
+
+
+async def _request_generation(
+    api_key: str,
+    model: str,
+    seed_title: str,
+    seed_artist: str,
+    distance_level: int,
+    challenge_mode: bool,
+    mood_tags: list[str],
+) -> tuple[list[GeneratedSuggestion], OpenRouterUsage | None]:
+    guidance_notes = [
+        {
+            1: "Suggest songs very close in sound, mood, and era to the seed.",
+            2: "Suggest songs with similar mood or genre, but avoid the most obvious picks.",
+            3: "Balance familiarity and discovery. Each suggestion needs a clear musical bridge.",
+            4: "Prefer bolder picks: adjacent genres, era jumps, or regional parallels.",
+            5: "Make adventurous but defensible suggestions. No same-artist picks.",
+        }.get(distance_level, "Balance familiarity and discovery.")
+    ]
+    if challenge_mode:
+        guidance_notes.append("Challenge mode: stretch the listener's taste, not just mirror it.")
+    if mood_tags:
+        guidance_notes.append(f"Respect these mood tags: {', '.join(mood_tags)}.")
+    guidance = "\n".join(f"- {note}" for note in guidance_notes)
+
+    try:
+        async with api_client() as client:
+            response = await request_with_retries(
+                client,
+                "POST",
+                OPENROUTER_CHAT_URL,
+                service="openrouter",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "X-Title": "Craterra",
+                },
+                json={
+                    "model": model,
+                    "temperature": 0.6,
+                    "max_tokens": 900,
+                    "response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": "craterra_generation",
+                            "strict": True,
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "suggestions": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "maxItems": 6,
+                                        "items": {
+                                            "type": "object",
+                                            "additionalProperties": False,
+                                            "properties": {
+                                                "artist": {"type": "string"},
+                                                "title": {"type": "string"},
+                                                "reason": {"type": "string"},
+                                            },
+                                            "required": ["artist", "title", "reason"],
+                                        },
+                                    }
+                                },
+                                "required": ["suggestions"],
+                            },
+                        },
+                    },
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are Craterra, a music digging expert. "
+                                "Suggest real, existing songs similar to the seed track. "
+                                "Only name songs you are certain exist. "
+                                "Each reason must name the musical bridge and one key difference. "
+                                "Do not invent songs or artists."
+                            ),
+                        },
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Seed track: \"{seed_title}\" by {seed_artist}\n\n"
+                                f"Digging guidance:\n{guidance}\n\n"
+                                "Suggest 4 to 6 real songs that a listener who loves this track "
+                                "would want to discover. Return JSON only."
+                            ),
+                        },
+                    ],
+                },
+            )
+            response.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise OpenRouterCurationError(str(exc)) from exc
+
+    response_data = response.json()
+    try:
+        content = response_data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise OpenRouterCurationError("Unexpected OpenRouter response shape.") from exc
+
+    if not content:
+        raise OpenRouterCurationError("Model returned empty content.")
+
+    try:
+        payload = GenerationPayload.model_validate_json(content)
+    except ValidationError:
+        try:
+            payload = GenerationPayload.model_validate(json.loads(content))
+        except (json.JSONDecodeError, ValidationError, TypeError) as exc:
+            raise OpenRouterCurationError("Model did not return valid generation JSON.") from exc
+
+    return payload.suggestions, _extract_usage(response_data)
 
 
 def _curation_guidance(request: DigRequest) -> str:
