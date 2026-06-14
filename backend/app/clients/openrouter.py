@@ -260,6 +260,7 @@ async def generate_similar_tracks(
     seed_title: str,
     seed_artist: str,
     *,
+    audio_analysis: str | None = None,
     distance_level: int = 3,
     challenge_mode: bool = False,
     mood_tags: list[str] | None = None,
@@ -282,6 +283,7 @@ async def generate_similar_tracks(
                 model=model,
                 seed_title=seed_title,
                 seed_artist=seed_artist,
+                audio_analysis=audio_analysis,
                 distance_level=distance_level,
                 challenge_mode=challenge_mode,
                 mood_tags=mood_tags or [],
@@ -298,6 +300,7 @@ async def _request_generation(
     model: str,
     seed_title: str,
     seed_artist: str,
+    audio_analysis: str | None,
     distance_level: int,
     challenge_mode: bool,
     mood_tags: list[str],
@@ -377,7 +380,12 @@ async def _request_generation(
                             "role": "user",
                             "content": (
                                 f"Seed track: \"{seed_title}\" by {seed_artist}\n\n"
-                                f"Digging guidance:\n{guidance}\n\n"
+                                + (
+                                    f"Audio analysis of the seed track:\n{audio_analysis}\n\n"
+                                    if audio_analysis
+                                    else ""
+                                )
+                                + f"Digging guidance:\n{guidance}\n\n"
                                 "Suggest 4 to 6 real songs that a listener who loves this track "
                                 "would want to discover. Return JSON only."
                             ),

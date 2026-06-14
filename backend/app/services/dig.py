@@ -17,6 +17,7 @@ from backend.app.clients.openrouter import (
     generate_similar_tracks,
 )
 from backend.app.clients.deezer import resolve_artist_name, search_deezer
+from backend.app.clients.gemini import analyze_audio_preview
 from backend.app.schemas import CandidateTrack, DigRequest, DigResponse, RecommendationCard
 from backend.app.services.outbound_links import build_outbound_links
 from backend.app.services.persistence import get_session_profile, save_dig_history
@@ -165,10 +166,21 @@ async def _build_track2_response(
     seed_artist: str,
 ) -> DigResponse:
     """Track 2 path: AI generates similar song suggestions and YouTube confirms each one."""
+    # Validate seed to get a preview URL for Gemini audio analysis.
+    seed_validation = await validate_track(
+        f"{seed_artist} {seed_title}",
+        match_artist=seed_artist,
+        match_title=seed_title,
+    )
+    audio_analysis: str | None = None
+    if seed_validation.result and seed_validation.result.preview_url:
+        audio_analysis = await analyze_audio_preview(str(seed_validation.result.preview_url))
+
     try:
         suggestions, model_used, usage = await generate_similar_tracks(
             seed_title=seed_title,
             seed_artist=seed_artist,
+            audio_analysis=audio_analysis,
             distance_level=request.distance_level,
             challenge_mode=request.challenge_mode,
             mood_tags=request.mood_tags,

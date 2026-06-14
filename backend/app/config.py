@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     supabase_url: str | None = None
     supabase_service_role_key: str | None = None
     youtube_api_key: str | None = None
+    gemini_api_key: str | None = None
     apple_music_affiliate_token: str | None = None
     http_timeout_seconds: float = 10.0
     local_data_dir: str = "data"
