@@ -4,7 +4,6 @@ const artistInput = document.querySelector("#artist");
 const distanceInput = document.querySelector("#distance");
 const distanceOutput = document.querySelector("#distance-output");
 const moodInput = document.querySelector("#mood");
-const regionInput = document.querySelector("#region");
 const challengeInput = document.querySelector("#challenge");
 const results = document.querySelector("#results");
 const statusEl = document.querySelector("#status");
@@ -52,7 +51,6 @@ form.addEventListener("submit", async (event) => {
       query: song,
       artist: artist || null,
       distance_level: Number(distanceInput.value),
-      region: blankToNull(regionInput.value),
       challenge_mode: challengeInput.checked,
       mood_tags: moodInput.value
         .split(",")

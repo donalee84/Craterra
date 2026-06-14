@@ -168,7 +168,6 @@ def _build_payload(
     user_context = {
         "query": request.query,
         "distance_level": request.distance_level,
-        "region": request.region,
         "challenge_mode": request.challenge_mode,
         "mood_tags": request.mood_tags,
         "normalized_root": {
@@ -266,8 +265,6 @@ def _curation_guidance(request: DigRequest) -> str:
         notes.append(
             "Challenge mode is on: do not simply mirror the user's taste; choose tracks that stretch it."
         )
-    if request.region:
-        notes.append(f"Use the region preference when candidates allow it: {request.region}.")
     if request.mood_tags:
         notes.append(f"Respect these mood tags: {', '.join(request.mood_tags)}.")
 

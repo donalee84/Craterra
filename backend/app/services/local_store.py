@@ -118,7 +118,6 @@ def build_dig_history_record(
         "root_song": request.query,
         "params": {
             "distance_level": request.distance_level,
-            "region": request.region,
             "challenge_mode": request.challenge_mode,
             "mood_tags": request.mood_tags,
         },
