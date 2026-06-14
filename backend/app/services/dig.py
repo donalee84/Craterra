@@ -1,6 +1,5 @@
 import logging
 import re
-import unicodedata
 
 from fastapi import HTTPException, status
 
@@ -20,6 +19,7 @@ from backend.app.clients.deezer import resolve_artist_name, search_deezer
 from backend.app.schemas import CandidateTrack, DigRequest, DigResponse, RecommendationCard
 from backend.app.services.outbound_links import build_outbound_links
 from backend.app.services.persistence import get_session_profile, save_dig_history
+from backend.app.services.text_match import normalize_key as _normalize_key, text_close as _text_close
 from backend.app.services.validation import validate_track
 
 
@@ -112,13 +112,16 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
     recommendations: list[RecommendationCard] = []
     for pick in picks:
         candidate = curation_candidates[pick.candidate_index]
-        validation_response = await validate_track(f"{candidate.artist} {candidate.title}")
+        validation_response = await validate_track(
+            f"{candidate.artist} {candidate.title}",
+            match_artist=candidate.artist,
+            match_title=candidate.title,
+        )
         result = validation_response.result
-        if result is None or not _validation_matches(candidate, result):
+        if result is None:
             # Drop picks we cannot confirm as the same track on
-            # Deezer/MusicBrainz/iTunes. Those sources return their top search
-            # hit even for loose keyword matches, so an unverifiable pick would
-            # otherwise show up as a hallucination-looking, unfindable track.
+            # Deezer/MusicBrainz/iTunes so the UI never shows an unfindable,
+            # hallucination-looking track.
             continue
         recommendations.append(
             RecommendationCard(
@@ -287,28 +290,6 @@ def _is_filler_track(title: str | None) -> bool:
     return bool(title and _FILLER_TITLE_RE.search(title))
 
 
-def _validation_matches(candidate: CandidateTrack, result) -> bool:
-    """True when a validation hit is plausibly the same track as the candidate.
-
-    The validation sources return their top search result even for loose
-    keyword matches, so confirm both the artist and title actually line up.
-    """
-    return _text_close(candidate.artist, result.artist) and _text_close(candidate.title, result.title)
-
-
-def _text_close(a: str | None, b: str | None) -> bool:
-    ka, kb = _normalize_key(a), _normalize_key(b)
-    if not ka or not kb:
-        return False
-    if ka == kb or ka in kb or kb in ka:
-        return True
-    tokens_a, tokens_b = set(ka.split()), set(kb.split())
-    if not tokens_a or not tokens_b:
-        return False
-    overlap = len(tokens_a & tokens_b) / min(len(tokens_a), len(tokens_b))
-    return overlap >= 0.6
-
-
 def _artist_matches_root(artist: str | None, root_artist_key: str) -> bool:
     """True when the candidate is by, or a collaboration including, the seed artist."""
     if not root_artist_key:
@@ -316,13 +297,3 @@ def _artist_matches_root(artist: str | None, root_artist_key: str) -> bool:
     if _normalize_key(artist) == root_artist_key:
         return True
     return root_artist_key in {_normalize_key(part) for part in _COLLAB_SPLIT_RE.split(artist or "")}
-
-
-def _normalize_key(value: str | None) -> str:
-    # Unify apostrophe variants and strip accents so the same artist from
-    # different sources compares equal, e.g. Deezer "L'indecis" vs Last.fm
-    # "L’indécis".
-    text = (value or "").replace("’", "'").replace("‘", "'").replace("`", "'")
-    text = unicodedata.normalize("NFKD", text)
-    text = "".join(ch for ch in text if not unicodedata.combining(ch))
-    return " ".join(text.casefold().strip().split())

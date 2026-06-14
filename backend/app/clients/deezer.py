@@ -37,6 +37,11 @@ async def resolve_artist_name(name: str | None) -> str | None:
 
 
 async def search_deezer(query: str) -> TrackValidationResult | None:
+    results = await search_deezer_candidates(query, limit=1)
+    return results[0] if results else None
+
+
+async def search_deezer_candidates(query: str, limit: int = 8) -> list[TrackValidationResult]:
     try:
         async with api_client() as client:
             response = await request_with_retries(
@@ -44,20 +49,19 @@ async def search_deezer(query: str) -> TrackValidationResult | None:
                 "GET",
                 DEEZER_SEARCH_URL,
                 service="deezer",
-                params={"q": query, "limit": 1},
+                params={"q": query, "limit": limit},
             )
             response.raise_for_status()
     except httpx.HTTPError:
-        return None
+        return []
 
     data = response.json().get("data", [])
-    if not data:
-        return None
+    return [_to_validation_result(track, query) for track in data[:limit]]
 
-    track: dict[str, Any] = data[0]
+
+def _to_validation_result(track: dict[str, Any], query: str) -> TrackValidationResult:
     artist = track.get("artist") or {}
     album = track.get("album") or {}
-
     return TrackValidationResult(
         source="deezer",
         title=track.get("title") or query,
