@@ -40,7 +40,7 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
         seed_query = request.query
 
     try:
-        candidates = await get_candidate_tracks(
+        candidates, has_direct_similar = await get_candidate_tracks(
             seed_query,
             limit=25,
             root_title=seed_title,
@@ -82,11 +82,10 @@ async def build_dig_response(request: DigRequest) -> DigResponse:
             next_step="No Last.fm or ListenBrainz candidates found for this query.",
         )
 
-    # Track 2: when direct song-similarity data is sparse (< 3 from track.getSimilar),
-    # fall back to AI generation + strict YouTube validation instead of curating
-    # a pool that is mostly era/artist-cluster guesses.
-    direct_similar_count = sum(1 for c in candidates if c.source == "lastfm:track.getSimilar")
-    if direct_similar_count < 3 and seed_title and seed_artist:
+    # Track 2: when Last.fm has no direct track.getSimilar data for the root
+    # song, fall back to AI generation + YouTube validation instead of curating
+    # a pool that is mostly era/artist-cluster guesses from the fallback path.
+    if not has_direct_similar and seed_title and seed_artist:
         return await _build_track2_response(request, candidates, seed_title, seed_artist)
 
     session_profile = await get_session_profile(request.session_id)

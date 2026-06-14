@@ -23,7 +23,14 @@ async def get_candidate_tracks(
     limit: int = 10,
     root_title: str | None = None,
     root_artist: str | None = None,
-) -> list[CandidateTrack]:
+) -> tuple[list[CandidateTrack], bool]:
+    """Return (candidates, has_direct_similar).
+
+    has_direct_similar=True means Last.fm returned track.getSimilar data
+    specifically for the root track. False means we fell back to a search-
+    based path, which finds similar tracks for a different song — a weaker
+    signal that should trigger the Track 2 AI-generation path in dig.py.
+    """
     settings = get_settings()
     if not settings.lastfm_api_key:
         raise LastFmNotConfiguredError("LASTFM_API_KEY is not configured.")
@@ -36,11 +43,11 @@ async def get_candidate_tracks(
             limit=limit,
         )
         if similar_tracks:
-            return similar_tracks
+            return similar_tracks, True
 
     search_results = await _track_search(query, settings.lastfm_api_key, limit=1)
     if not search_results:
-        return []
+        return [], False
 
     root = search_results[0]
     title = root.get("name") or query
@@ -54,9 +61,9 @@ async def get_candidate_tracks(
     )
 
     if similar_tracks:
-        return similar_tracks
+        return similar_tracks, False
 
-    return _normalize_search_results(search_results, limit=limit)
+    return _normalize_search_results(search_results, limit=limit), False
 
 
 async def get_similar_artist_tracks(
